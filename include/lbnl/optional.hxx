@@ -20,7 +20,8 @@ namespace lbnl
 
     // or_else: Calls function if optional is empty, returns default optional
     template<typename T, typename Func>
-    auto or_else(const std::optional<T> & opt, Func && func) -> std::optional<T>
+    auto or_else(const std::optional<T> & opt,
+                 Func && func) -> std::optional<std::invoke_result_t<Func>>   // Fix type deduction
     {
         if(!opt)
         {
