@@ -20,24 +20,20 @@ namespace lbnl
 
     // `or_else`: Calls function if optional is empty
     template<typename T, typename Func>
-    auto or_else(const std::optional<T> & opt,
-                 Func && func) -> std::optional<std::invoke_result_t<Func>>
-    {
-        if(!opt)
-        {
-            return std::invoke(std::forward<Func>(func));
-        }
-        return opt;
-    }
-
-    // `or_else`: Calls function if optional is empty, returns `T` directly
-    template<typename T, typename Func>
     auto or_else(const std::optional<T> & opt, Func && func) -> T
     {
         return opt ? *opt : std::invoke(std::forward<Func>(func));
     }
 
-    // Pipe operator for `or_else`
+    // Define `operator|` for `std::optional<T>`
+    template<typename T, typename Func>
+    auto operator|(const std::optional<T> & opt,
+                   Func && func) -> std::optional<std::invoke_result_t<Func, const T &>>
+    {
+        return and_then(opt, std::forward<Func>(func));
+    }
+
+    // Define `operator||` for `std::optional<T>`
     template<typename T, typename Func>
     auto operator||(const std::optional<T> & opt, Func && func) -> T
     {
