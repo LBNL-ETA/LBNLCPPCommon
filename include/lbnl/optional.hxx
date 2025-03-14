@@ -8,8 +8,8 @@ namespace lbnl
 {
     // and_then: Calls function if value is present, returns new optional
     template<typename T, typename Func>
-    auto and_then(const std::optional<T> & opt,
-                  Func && func) -> std::optional<std::invoke_result_t<Func, T>>
+    auto and_then(const std::optional<T> & opt, Func && func)
+      -> std::optional<std::invoke_result_t<Func, const T &>>   // Fix deduction
     {
         if(opt)
         {
