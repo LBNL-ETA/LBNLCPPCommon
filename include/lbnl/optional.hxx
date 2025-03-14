@@ -6,7 +6,6 @@
 
 namespace lbnl
 {
-
     // `and_then`: Calls function if optional contains a value
     template<typename T, typename Func>
     auto and_then(const std::optional<T> & opt,
@@ -31,7 +30,7 @@ namespace lbnl
         return opt;
     }
 
-    // Pipe operator for `and_then`
+    // Define the pipe operator `|`
     template<typename T, typename Func>
     auto operator|(const std::optional<T> & opt,
                    Func && func) -> std::optional<std::invoke_result_t<Func, const T &>>
@@ -39,7 +38,7 @@ namespace lbnl
         return and_then(opt, std::forward<Func>(func));
     }
 
-    // Pipe operator for `or_else`
+    // Define the double pipe operator `||`
     template<typename T, typename Func>
     auto operator||(const std::optional<T> & opt,
                     Func && func) -> std::optional<std::invoke_result_t<Func>>
