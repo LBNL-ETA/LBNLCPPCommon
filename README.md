@@ -1,4 +1,3 @@
-cat > README.md <<EOF
 # LBNLCPPCommon
 *A header-only C++ library for reusable utility functions*
 
