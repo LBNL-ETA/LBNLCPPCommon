@@ -6,10 +6,11 @@
 
 namespace lbnl
 {
-    // and_then: Calls function if value is present, returns new optional
+
+    // `and_then`: Calls function if optional contains a value
     template<typename T, typename Func>
-    auto and_then(const std::optional<T> & opt, Func && func)
-      -> std::optional<std::invoke_result_t<Func, const T &>>   // Fix deduction
+    auto and_then(const std::optional<T> & opt,
+                  Func && func) -> std::optional<std::invoke_result_t<Func, const T &>>
     {
         if(opt)
         {
@@ -18,16 +19,32 @@ namespace lbnl
         return std::nullopt;
     }
 
-    // or_else: Calls function if optional is empty, returns default optional
+    // `or_else`: Calls function if optional is empty
     template<typename T, typename Func>
     auto or_else(const std::optional<T> & opt,
-                 Func && func) -> std::optional<std::invoke_result_t<Func>>   // Fix type deduction
+                 Func && func) -> std::optional<std::invoke_result_t<Func>>
     {
         if(!opt)
         {
             return std::invoke(std::forward<Func>(func));
         }
         return opt;
+    }
+
+    // Pipe operator for `and_then`
+    template<typename T, typename Func>
+    auto operator|(const std::optional<T> & opt,
+                   Func && func) -> std::optional<std::invoke_result_t<Func, const T &>>
+    {
+        return and_then(opt, std::forward<Func>(func));
+    }
+
+    // Pipe operator for `or_else`
+    template<typename T, typename Func>
+    auto operator||(const std::optional<T> & opt,
+                    Func && func) -> std::optional<std::invoke_result_t<Func>>
+    {
+        return or_else(opt, std::forward<Func>(func));
     }
 
 }   // namespace lbnl
