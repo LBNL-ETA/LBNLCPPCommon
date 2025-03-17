@@ -29,7 +29,7 @@ namespace lbnl
 
     //! Remove duplicates from a container
     template<std::ranges::range R>
-    auto unique(const R& range)
+    auto unique(const R & range)
     {
         using ValueType = std::ranges::range_value_t<R>;
 
@@ -37,6 +37,20 @@ namespace lbnl
         std::sort(result.begin(), result.end());
         result.erase(std::unique(result.begin(), result.end()), result.end());
 
+        return result;
+    }
+
+    template<typename Container1, typename Container2>
+    auto zip(const Container1 & c1, const Container2 & c2)
+    {
+        std::vector<std::pair<typename Container1::value_type, typename Container2::value_type>>
+          result;
+        auto size = std::min(c1.size(), c2.size());
+
+        for(size_t i = 0; i < size; ++i)
+        {
+            result.emplace_back(c1[i], c2[i]);
+        }
         return result;
     }
 
