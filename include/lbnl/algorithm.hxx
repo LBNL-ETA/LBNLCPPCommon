@@ -58,13 +58,12 @@ namespace lbnl
     auto filter(const R & range, Predicate predicate)
     {
         std::vector<std::ranges::range_value_t<R>> result;
-        for(const auto & element : range)
-        {
+        std::ranges::for_each(range, [&](const auto & element) {
             if(predicate(element))
             {
                 result.push_back(element);
             }
-        }
+        });
         return result;
     }
 
@@ -129,5 +128,17 @@ namespace lbnl
         }
         return result;
     }
+
+    template<typename T>
+    std::vector<T> flatten(const std::vector<std::vector<T>> & nested)
+    {
+        std::vector<T> result;
+        for(const auto & inner : nested)
+        {
+            result.insert(result.end(), inner.begin(), inner.end());
+        }
+        return result;
+    }
+
 
 }   // namespace lbnl
