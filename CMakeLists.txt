@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(LBNLCPPCommon LANGUAGES CXX)
 
+# Force all targets to use the dynamic runtime library on MSVC
+if (MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
 # Create a header-only library
 add_library(LBNLCPPCommon INTERFACE)
 
@@ -9,6 +14,11 @@ target_include_directories(LBNLCPPCommon INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/i
 
 # Require C++20 because of ranges and concepts
 target_compile_features(LBNLCPPCommon INTERFACE cxx_std_20)
+
+# Apply the runtime library setting to the main package
+if (MSVC)
+    target_compile_options(LBNLCPPCommon INTERFACE /MD$<$<CONFIG:Debug>:d>)
+endif()
 
 # Only add GoogleTest if this is the top-level project
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -22,6 +32,12 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
             GIT_REPOSITORY https://github.com/google/googletest.git
             GIT_TAG v1.16.0
     )
+
+    # Force GoogleTest to use the same runtime library as the project
+    if (MSVC)
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    endif()
+
     FetchContent_MakeAvailable(googletest)
 
     # Collect all .cxx files in the tst directory
@@ -35,6 +51,11 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     # Require C++20 for the test target
     target_compile_features(LBNLCPPCommonTests PRIVATE cxx_std_20)
+
+    # Apply the runtime library setting to the test target
+    if (MSVC)
+        target_compile_options(LBNLCPPCommonTests PRIVATE /MD$<$<CONFIG:Debug>:d>)
+    endif()
 
     target_link_libraries(LBNLCPPCommonTests PRIVATE gtest_main)
 

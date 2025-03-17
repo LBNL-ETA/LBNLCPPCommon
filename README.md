@@ -16,7 +16,8 @@
 LBNLCPPCommon/
 │── include/
 │   ├── lbnl/
-│   │   ├── algorithm.hxx   # Contains common algorithms like findElement
+│   │   ├── algorithm.hxx
+│   │   ├── optional.hxx
 │── CMakeLists.txt
 │── README.md
 \`\`\`
