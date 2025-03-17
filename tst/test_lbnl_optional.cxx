@@ -4,7 +4,7 @@
 
 
 // Test and_then with a valid optional
-TEST(LbnlOptionalTest, AndThen_WithValue)
+TEST(OptionalTest, AndThen_WithValue)
 {
     std::optional opt_value = 5;
     auto result = lbnl::and_then(opt_value, [](int x) { return x * 2; });
@@ -14,7 +14,7 @@ TEST(LbnlOptionalTest, AndThen_WithValue)
 }
 
 // Test and_then with an empty optional
-TEST(LbnlOptionalTest, AndThen_Empty)
+TEST(OptionalTest, AndThen_Empty)
 {
     std::optional<int> opt_value;
     auto result = lbnl::and_then(opt_value, [](int x) { return x * 2; });
@@ -23,7 +23,7 @@ TEST(LbnlOptionalTest, AndThen_Empty)
 }
 
 // Test or_else with a valid optional
-TEST(LbnlOptionalTest, OrElse_WithValue)
+TEST(OptionalTest, OrElse_WithValue)
 {
     std::optional opt_value = 5;
     auto result = lbnl::or_else(opt_value, []() { return 10; });
@@ -32,7 +32,7 @@ TEST(LbnlOptionalTest, OrElse_WithValue)
 }
 
 // Test or_else with an empty optional
-TEST(LbnlOptionalTest, OrElse_Empty)
+TEST(OptionalTest, OrElse_Empty)
 {
     std::optional<int> opt_value;
     auto result = lbnl::or_else(opt_value, []() { return 10; });
@@ -41,7 +41,7 @@ TEST(LbnlOptionalTest, OrElse_Empty)
 }
 
 // Test operator| with a valid optional
-TEST(LbnlOptionalTest, OperatorPipe_WithValue)
+TEST(OptionalTest, OperatorPipe_WithValue)
 {
     using namespace lbnl;
 
@@ -53,7 +53,7 @@ TEST(LbnlOptionalTest, OperatorPipe_WithValue)
 }
 
 // Test operator| with an empty optional
-TEST(LbnlOptionalTest, OperatorPipe_Empty)
+TEST(OptionalTest, OperatorPipe_Empty)
 {
     using namespace lbnl;
 
@@ -64,7 +64,7 @@ TEST(LbnlOptionalTest, OperatorPipe_Empty)
 }
 
 // Test operator|| with a valid optional
-TEST(LbnlOptionalTest, OperatorOr_WithValue)
+TEST(OptionalTest, OperatorOr_WithValue)
 {
     using namespace lbnl;
 
@@ -75,7 +75,7 @@ TEST(LbnlOptionalTest, OperatorOr_WithValue)
 }
 
 // Test operator|| with an empty optional
-TEST(LbnlOptionalTest, OperatorOr_Empty)
+TEST(OptionalTest, OperatorOr_Empty)
 {
     using namespace lbnl;
 

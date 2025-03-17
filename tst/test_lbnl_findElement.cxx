@@ -5,7 +5,7 @@
 #include <lbnl/algorithm.hxx>
 
 // Test case when an element is found
-TEST(LbnlFindElementTest, FindsElementInVector)
+TEST(FindElementTest, FindsElementInVector)
 {
     std::vector<int> numbers = {1, 2, 3, 4, 5};
     auto result =
@@ -16,7 +16,7 @@ TEST(LbnlFindElementTest, FindsElementInVector)
 }
 
 // Test case when an element is not found
-TEST(LbnlFindElementTest, ReturnsNulloptIfNotFound)
+TEST(FindElementTest, ReturnsNulloptIfNotFound)
 {
     std::vector numbers = {1, 3, 5, 7, 9};   // No even numbers
     auto result = lbnl::findElement(numbers, [](int x) { return x % 2 == 0; });
@@ -25,7 +25,7 @@ TEST(LbnlFindElementTest, ReturnsNulloptIfNotFound)
 }
 
 // Test case with an empty container
-TEST(LbnlFindElementTest, EmptyContainerReturnsNullopt)
+TEST(FindElementTest, EmptyContainerReturnsNullopt)
 {
     std::vector<int> numbers;
     auto result = lbnl::findElement(numbers, [](int x) { return x == 5; });
@@ -34,7 +34,7 @@ TEST(LbnlFindElementTest, EmptyContainerReturnsNullopt)
 }
 
 // Test case with a vector of strings
-TEST(LbnlFindElementTest, FindsElementInStringVector)
+TEST(FindElementTest, FindsElementInStringVector)
 {
     std::vector<std::string> words = {"apple", "banana", "cherry", "date"};
     auto result =
@@ -45,7 +45,7 @@ TEST(LbnlFindElementTest, FindsElementInStringVector)
 }
 
 // Test case with a vector of doubles
-TEST(LbnlFindElementTest, FindsElementInDoubleVector)
+TEST(FindElementTest, FindsElementInDoubleVector)
 {
     std::vector values = {1.1, 2.2, 3.3, 4.4};
     auto result = lbnl::findElement(values, [](double x) { return x > 3.0; });
@@ -61,7 +61,7 @@ struct Item
     std::string name;
 };
 
-TEST(LbnlFindElementTest, FindsElementInCustomStructVector)
+TEST(FindElementTest, FindsElementInCustomStructVector)
 {
     std::vector<Item> items = {{1, "First"}, {2, "Second"}, {3, "Third"}};
     auto result = lbnl::findElement(items, [](const Item & item) { return item.id == 2; });

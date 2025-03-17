@@ -54,12 +54,78 @@ namespace lbnl
         return result;
     }
 
+    template<std::ranges::range R, typename Predicate>
+    auto filter(const R & range, Predicate predicate)
+    {
+        std::vector<std::ranges::range_value_t<R>> result;
+        for(const auto & element : range)
+        {
+            if(predicate(element))
+            {
+                result.push_back(element);
+            }
+        }
+        return result;
+    }
+
+    template<std::ranges::range R1, std::ranges::range R2>
+    auto merge(const R1 & range1, const R2 & range2)
+    {
+        std::vector<std::ranges::range_value_t<R1>> result;
+        auto it1 = range1.begin();
+        auto it2 = range2.begin();
+        while(it1 != range1.end() && it2 != range2.end())
+        {
+            if(*it1 <= *it2)
+            {
+                result.push_back(*it1);
+                ++it1;
+            }
+            else
+            {
+                result.push_back(*it2);
+                ++it2;
+            }
+        }
+        while(it1 != range1.end())
+        {
+            result.push_back(*it1);
+            ++it1;
+        }
+        while(it2 != range2.end())
+        {
+            result.push_back(*it2);
+            ++it2;
+        }
+        return result;
+    }
+
     inline std::vector<std::string> split(std::string_view str, char delimiter)
     {
         std::vector<std::string> result;
         for(auto part : str | std::views::split(delimiter))
         {
             result.emplace_back(part.begin(), part.end());
+        }
+        return result;
+    }
+
+    template<std::ranges::range R, typename Predicate>
+    auto partition(const R & range, Predicate predicate)
+    {
+        std::pair<std::vector<std::ranges::range_value_t<R>>,
+                  std::vector<std::ranges::range_value_t<R>>>
+          result;
+        for(const auto & element : range)
+        {
+            if(predicate(element))
+            {
+                result.first.push_back(element);
+            }
+            else
+            {
+                result.second.push_back(element);
+            }
         }
         return result;
     }
