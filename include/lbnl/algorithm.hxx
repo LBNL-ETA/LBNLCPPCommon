@@ -15,7 +15,7 @@ namespace lbnl
         return (it != std::ranges::cend(elements)) ? std::optional<typename Container::value_type>(*it) : std::nullopt;
     }
 
-    inline std::vector<std::string> split_view(std::string_view str, char delimiter)
+    inline std::vector<std::string> split(std::string_view str, char delimiter)
     {
         std::vector<std::string> result;
         for (auto part : str | std::views::split(delimiter))

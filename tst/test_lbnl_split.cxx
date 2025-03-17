@@ -3,7 +3,7 @@
 
 TEST(SplitViewTest, BasicSplitting) {
     std::string input = "apple,banana,orange";
-    auto result = lbnl::split_view(input, ',');
+    auto result = lbnl::split(input, ',');
 
     ASSERT_EQ(result.size(), 3);
     EXPECT_EQ(result[0], "apple");
@@ -13,7 +13,7 @@ TEST(SplitViewTest, BasicSplitting) {
 
 TEST(SplitViewTest, SingleElement) {
     std::string input = "singleword";
-    auto result = lbnl::split_view(input, ',');
+    auto result = lbnl::split(input, ',');
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_EQ(result[0], "singleword");
@@ -21,14 +21,14 @@ TEST(SplitViewTest, SingleElement) {
 
 TEST(SplitViewTest, EmptyString) {
     std::string input = "";
-    auto result = lbnl::split_view(input, ',');
+    auto result = lbnl::split(input, ',');
 
     ASSERT_TRUE(result.empty());
 }
 
 TEST(SplitViewTest, ConsecutiveDelimiters) {
     std::string input = "apple,,banana,,orange";
-    auto result = lbnl::split_view(input, ',');
+    auto result = lbnl::split(input, ',');
 
     ASSERT_EQ(result.size(), 5);
     EXPECT_EQ(result[0], "apple");
@@ -40,7 +40,7 @@ TEST(SplitViewTest, ConsecutiveDelimiters) {
 
 TEST(SplitViewTest, LeadingAndTrailingDelimiters) {
     std::string input = ",apple,banana,orange,";
-    auto result = lbnl::split_view(input, ',');
+    auto result = lbnl::split(input, ',');
 
     ASSERT_EQ(result.size(), 5);
     EXPECT_EQ(result[0], "");
@@ -52,7 +52,7 @@ TEST(SplitViewTest, LeadingAndTrailingDelimiters) {
 
 TEST(SplitViewTest, DifferentDelimiter) {
     std::string input = "one|two|three|four";
-    auto result = lbnl::split_view(input, '|');
+    auto result = lbnl::split(input, '|');
 
     ASSERT_EQ(result.size(), 4);
     EXPECT_EQ(result[0], "one");
