@@ -9,7 +9,7 @@ TEST(MapUtilsTest, UnorderedMultimapLookupKeyFound)
     std::unordered_multimap<int, std::string> test_map = {{1, "one"}, {2, "two"}, {3, "three"}, {2, "second_two"}};
     auto result = lbnl::mapLookupKey(test_map, 2);
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), "two");
+    EXPECT_TRUE(result.value() == "two" || result.value() == "second_two");
 }
 
 TEST(MapUtilsTest, UnorderedMultimapLookupKeyNotFound)
