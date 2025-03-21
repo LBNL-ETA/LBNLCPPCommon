@@ -34,7 +34,7 @@ namespace lbnl
         using ValueType = std::ranges::range_value_t<R>;
 
         std::vector<ValueType> result(range.begin(), range.end());
-        std::sort(result.begin(), result.end());
+        std::ranges::sort(result);
         result.erase(std::unique(result.begin(), result.end()), result.end());
 
         return result;
