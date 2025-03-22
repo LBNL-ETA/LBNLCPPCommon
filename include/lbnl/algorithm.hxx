@@ -102,10 +102,20 @@ namespace lbnl
     inline std::vector<std::string> split(std::string_view str, char delimiter)
     {
         std::vector<std::string> result;
-        for(auto part : str | std::views::split(delimiter))
-        {
-            result.emplace_back(part.begin(), part.end());
+
+        if (str.empty()) {
+            return result;
         }
+
+        size_t start = 0;
+        while (start <= str.size()) {
+            size_t end = str.find(delimiter, start);
+            if (end == std::string_view::npos)
+                end = str.size();
+            result.emplace_back(str.substr(start, end - start));
+            start = end + 1;
+        }
+
         return result;
     }
 
