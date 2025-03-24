@@ -40,4 +40,45 @@ namespace lbnl
         return or_else(opt, std::forward<Func>(func));
     }
 
+    // Helper class to extend `std::optional` with `and_then` and `or_else` methods
+    // This can be removed once C++23 is available
+    template<typename T>
+    class OptionalExt
+    {
+    public:
+        explicit OptionalExt(std::optional<T> opt) : m_opt(std::move(opt))
+        {}
+
+        template<typename Func>
+        auto and_then(Func && f) const
+        {
+            using Result = std::invoke_result_t<Func, const T &>;
+            if(m_opt)
+            {
+                return OptionalExt<Result>(std::invoke(std::forward<Func>(f), *m_opt));
+            }
+            return OptionalExt<Result>(std::nullopt);
+        }
+
+        template<typename Func>
+        auto or_else(Func && f) const -> T
+        {
+            return m_opt ? *m_opt : std::invoke(std::forward<Func>(f));
+        }
+
+        const std::optional<T> & raw() const
+        {
+            return m_opt;
+        }
+
+    private:
+        std::optional<T> m_opt;
+    };
+
+    template<typename T>
+    auto extend(const std::optional<T> & opt)
+    {
+        return OptionalExt<T>(opt);
+    }
+
 }   // namespace lbnl
