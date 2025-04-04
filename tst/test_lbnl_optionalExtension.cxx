@@ -98,3 +98,46 @@ TEST(OptionalExtTest, OrElseSupportsVoidReturningFunction)
     EXPECT_TRUE(fallbackCalled);
     EXPECT_TRUE(result.raw().has_value());
 }
+
+TEST(OptionalExtTest, NestedAndThenIsFlattenedCorrectly)
+{
+    std::optional<int> opt = 10;
+
+    auto result = lbnl::extend(opt)
+        .and_then([](int v) {
+            // First step returns optional<string>
+            return std::optional<std::string>{"Number: " + std::to_string(v)};
+        })
+        .and_then([](const std::string& str) {
+            // Second step also returns optional based on a condition
+            if (str.length() > 5)
+            {
+                return std::optional<size_t>{str.length()};
+            }
+            return std::optional<size_t>{};
+        });
+
+    EXPECT_TRUE(result.raw().has_value());
+    EXPECT_EQ(result.raw().value(), std::string("Number: 10").length());
+}
+
+TEST(OptionalExtTest, DeeplyNestedAndThenChainsWork)
+{
+    std::optional<int> opt = 3;
+
+    auto result = lbnl::extend(opt)
+        .and_then([](int v) {
+            return std::optional<std::string>{"Level1_" + std::to_string(v)};
+        })
+        .and_then([](const std::string& s) {
+            return s.size();  // plain value
+        })
+        .and_then([](size_t len) {
+            if (len > 5)
+                return std::optional<std::string>{"LengthOK"};
+            return std::optional<std::string>{};
+        });
+
+    EXPECT_TRUE(result.raw().has_value());
+    EXPECT_EQ(result.raw().value(), "LengthOK");
+}
