@@ -53,17 +53,56 @@ namespace lbnl
         auto and_then(Func && f) const
         {
             using Result = std::invoke_result_t<Func, const T &>;
-            if(m_opt)
+
+            if(!m_opt)
+            {
+                if constexpr(std::is_void_v<Result>)
+                {
+                    return OptionalExt<std::monostate>(std::nullopt);
+                }
+                else
+                {
+                    return OptionalExt<Result>(std::nullopt);
+                }
+            }
+
+            if constexpr(std::is_void_v<Result>)
+            {
+                std::invoke(std::forward<Func>(f), *m_opt);
+                return OptionalExt<std::monostate>(std::monostate{});
+            }
+            else
             {
                 return OptionalExt<Result>(std::invoke(std::forward<Func>(f), *m_opt));
             }
-            return OptionalExt<Result>(std::nullopt);
         }
 
         template<typename Func>
-        auto or_else(Func && f) const -> T
+        auto or_else(Func && f) const
         {
-            return m_opt ? *m_opt : std::invoke(std::forward<Func>(f));
+            using Result = std::invoke_result_t<Func>;
+
+            if constexpr(std::is_void_v<Result>)
+            {
+                if(!m_opt)
+                {
+                    std::invoke(std::forward<Func>(f));
+                    return OptionalExt<std::monostate>(std::monostate{});
+                }
+                return OptionalExt<std::monostate>(std::monostate{});
+            }
+            else
+            {
+                using ReturnType = std::decay_t<Result>;
+                if(m_opt)
+                {
+                    return OptionalExt<ReturnType>(*m_opt);
+                }
+                else
+                {
+                    return OptionalExt<ReturnType>(std::invoke(std::forward<Func>(f)));
+                }
+            }
         }
 
         const std::optional<T> & raw() const
