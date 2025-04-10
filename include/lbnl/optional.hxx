@@ -159,4 +159,20 @@ namespace lbnl
         return OptionalExt<T>(opt);
     }
 
+    template<typename T, typename Variant>
+    constexpr bool is_in_variant_v = false;
+
+    template<typename T, typename... Ts>
+    constexpr bool is_in_variant_v<T, std::variant<Ts...>> = (std::is_same_v<T, Ts> || ...);
+
+    template<typename T, typename Variant>
+    std::enable_if_t<is_in_variant_v<T, Variant>, std::optional<T>>
+    get_if_opt(const Variant& variant)
+    {
+        if (const auto* ptr = std::get_if<T>(&variant)) {
+            return *ptr;
+        }
+        return std::nullopt;
+    }
+
 } // namespace lbnl
