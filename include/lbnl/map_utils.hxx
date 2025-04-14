@@ -15,7 +15,7 @@ namespace lbnl
       };
 
     template<AssociativeContainer Map>
-    auto mapLookupKey(const Map & m, const typename Map::key_type & key)
+    auto mapLookupByKey(const Map & m, const typename Map::key_type & key)
       -> std::optional<typename Map::mapped_type>
     {
         auto it = m.find(key);
@@ -25,7 +25,7 @@ namespace lbnl
     }
 
     template<AssociativeContainer Map>
-    auto mapLookupValue(const Map & m, const typename Map::mapped_type & value)
+    auto mapLookupByValue(const Map & m, const typename Map::mapped_type & value)
       -> std::optional<typename Map::key_type>
     {
         auto it = std::ranges::find(
