@@ -16,7 +16,7 @@ TEST(TransformIfTests, EmptyContainerReturnsEmpty)
 {
     const std::vector<Record> original{};
 
-    auto result = lbnl::transform_where(
+    auto result = lbnl::transform_if(
       original,
       [](const Record &) { return true; },
       [](const Record & r) { return Record{r.UUID, "ShouldNotMatter"}; });
@@ -27,14 +27,14 @@ TEST(TransformIfTests, EmptyContainerReturnsEmpty)
 TEST(TransformIfTests, IdentityTransformationPreservesAll)
 {
     const std::vector<Record> original{
-          {"123", "A"},
-          {"456", "B"},
-        };
+      {"123", "A"},
+      {"456", "B"},
+    };
 
-    auto result = lbnl::transform_where(
+    auto result = lbnl::transform_if(
       original,
-      [](const Record &) { return true; },  // match all
-      [](const Record & r) { return r; });  // identity
+      [](const Record &) { return true; },   // match all
+      [](const Record & r) { return r; });   // identity
 
     EXPECT_EQ(result, original);
 }
@@ -42,13 +42,13 @@ TEST(TransformIfTests, IdentityTransformationPreservesAll)
 TEST(TransformIfTests, OriginalUnchangedAfterTransformation)
 {
     const std::vector<Record> original{
-          {"1", "X"},
-          {"2", "Y"},
-        };
+      {"1", "X"},
+      {"2", "Y"},
+    };
 
     auto copy = original;
 
-    auto result = lbnl::transform_where(
+    auto result = lbnl::transform_if(
       original,
       [](const Record & r) { return r.UUID == "1"; },
       [](const Record &) { return Record{"1", "Z"}; });
