@@ -93,7 +93,7 @@ namespace lbnl
     //! \param func The transformation function applied to elements that satisfy the predicate.
     //! \return A new vector where matching elements are transformed and others are copied as-is.
     template<std::ranges::range R, typename Predicate, typename Func>
-    auto transform_if(const R & range, Predicate pred, Func func)
+    auto transform_where(const R & range, Predicate pred, Func func)
     {
         using Value = std::ranges::range_value_t<R>;
         std::vector<Value> result;
@@ -261,22 +261,32 @@ namespace lbnl
         return to_vector(range | std::views::transform(std::forward<Func>(func)));
     }
 
-    //! Applies a transformation function to elements in the range that satisfy a given predicate.
+    //! Applies a transformation function to elements in the range that satisfy a given predicate,
+    //! copying unchanged elements otherwise. Returns a new container.
+    //!
+    //! This is a pure function: it does not modify the input range.
+    //!
     //! \tparam R The type of the range (must satisfy std::ranges::range).
-    //! \tparam Predicate A callable that takes a const reference to a range element and returns a
-    //! boolean.
-    //! \tparam Func A callable that takes a reference to a range element and performs a
-    //! transformation.
-    //! \param range The range of elements to process.
-    //! \param pred The predicate to determine which elements to update.
-    //! \param func The transformation function to apply to elements that satisfy the predicate.
+    //! \tparam Predicate A callable that takes a const reference to a range element and returns a boolean.
+    //! \tparam Func A callable that takes a const reference to a range element and returns a transformed value.
+    //! \param range The input range to process.
+    //! \param pred The predicate to determine which elements to transform.
+    //! \param func The transformation function applied to elements that satisfy the predicate.
+    //! \return A new vector where matching elements are transformed, and others are copied unchanged.
     template<std::ranges::range R, typename Predicate, typename Func>
-    void update_if(R && range, Predicate pred, Func func)
+    auto transform_if(const R& range, Predicate pred, Func func)
     {
-        for(auto & element : range | std::views::filter(pred))
+        using Value = std::ranges::range_value_t<R>; // The type of elements in the input range
+        std::vector<Value> result;
+        result.reserve(std::ranges::distance(range)); // Preallocate memory to optimize performance
+
+        for (const auto& element : range)
         {
-            func(element);
+            // Apply transformation if predicate is true; otherwise, copy the element as-is
+            result.push_back(pred(element) ? func(element) : element);
         }
+
+        return result; // Return the new vector
     }
 
 }   // namespace lbnl

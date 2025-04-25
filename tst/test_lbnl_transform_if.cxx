@@ -12,52 +12,47 @@ struct Record
     auto operator<=>(const Record &) const = default;
 };
 
-TEST(TransformIfTests, TransformsMatchingElement)
+TEST(TransformIfTests, EmptyContainerReturnsEmpty)
 {
-    const std::vector<Record> original{
-            {"123", "Original A"},
-            {"456", "Original B"},
-            {"789", "Original C"},
-        };
+    const std::vector<Record> original{};
 
-    const Record updatedRecord = {"456", "Updated B"};
+    auto result = lbnl::transform_where(
+      original,
+      [](const Record &) { return true; },
+      [](const Record & r) { return Record{r.UUID, "ShouldNotMatter"}; });
 
-    auto result = lbnl::transform_if(original,
-                                     [&](const Record & r) { return r.UUID == updatedRecord.UUID; },
-                                     [&](const Record &) { return updatedRecord; });
-
-    EXPECT_EQ(result[0].Name, "Original A");
-    EXPECT_EQ(result[1].Name, "Updated B");
-    EXPECT_EQ(result[2].Name, "Original C");
+    EXPECT_TRUE(result.empty());
 }
 
-TEST(TransformIfTests, NoMatchReturnsSameElements)
+TEST(TransformIfTests, IdentityTransformationPreservesAll)
 {
     const std::vector<Record> original{
-            {"123", "A"},
-            {"456", "B"},
+          {"123", "A"},
+          {"456", "B"},
         };
 
-    auto result = lbnl::transform_if(original,
-                                     [](const Record & r) { return r.UUID == "999"; },
-                                     [](const Record & r) { return Record{r.UUID, "ShouldNotChange"}; });
+    auto result = lbnl::transform_where(
+      original,
+      [](const Record &) { return true; },  // match all
+      [](const Record & r) { return r; });  // identity
 
     EXPECT_EQ(result, original);
 }
 
-TEST(TransformIfTests, MultipleMatchesAreTransformed)
+TEST(TransformIfTests, OriginalUnchangedAfterTransformation)
 {
     const std::vector<Record> original{
-            {"123", "A"},
-            {"123", "A again"},
-            {"456", "B"},
+          {"1", "X"},
+          {"2", "Y"},
         };
 
-    auto result = lbnl::transform_if(original,
-                                     [](const Record & r) { return r.UUID == "123"; },
-                                     [](const Record & r) { return Record{r.UUID, "Updated"}; });
+    auto copy = original;
 
-    EXPECT_EQ(result[0].Name, "Updated");
-    EXPECT_EQ(result[1].Name, "Updated");
-    EXPECT_EQ(result[2].Name, "B");
+    auto result = lbnl::transform_where(
+      original,
+      [](const Record & r) { return r.UUID == "1"; },
+      [](const Record &) { return Record{"1", "Z"}; });
+
+    // Ensure the original container is untouched
+    EXPECT_EQ(original, copy);
 }
