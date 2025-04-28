@@ -19,13 +19,15 @@ namespace lbnl
     //! \return An optional containing the first element that satisfies the predicate, or
     //! std::nullopt if no such element exists.
     template<typename Container, std::predicate<const typename Container::value_type &> Predicate>
-    [[nodiscard]] std::optional<typename Container::value_type>
+    [[nodiscard]] constexpr std::optional<std::decay_t<typename Container::value_type>>
       findElement(const Container & elements, Predicate predicate)
     {
-        const auto it = std::ranges::find_if(elements, predicate);
-        return (it != std::ranges::cend(elements))
-                 ? std::optional<typename Container::value_type>(*it)
-                 : std::nullopt;
+        auto it = std::ranges::find_if(elements, predicate);
+        if(it != std::ranges::cend(elements))
+        {
+            return *it;
+        }
+        return std::nullopt;
     }
 
     //! Checks if the container contains a specific value.
