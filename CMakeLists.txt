@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(LBNLCPPCommon LANGUAGES CXX)
 
-# Force all targets to use the dynamic runtime library on MSVC
+# Apply the runtime library setting to the main package
 if (MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    add_compile_options("/FC")  # Show full paths when compiling
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # Create a header-only library
@@ -14,11 +15,6 @@ target_include_directories(LBNLCPPCommon INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/i
 
 # Require C++20 because of ranges and concepts
 target_compile_features(LBNLCPPCommon INTERFACE cxx_std_20)
-
-# Apply the runtime library setting to the main package
-if (MSVC)
-    target_compile_options(LBNLCPPCommon INTERFACE /MD$<$<CONFIG:Debug>:d>)
-endif()
 
 # Only add GoogleTest if this is the top-level project
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
