@@ -19,8 +19,8 @@ namespace lbnl
     //! \return An optional containing the first element that satisfies the predicate, or
     //! std::nullopt if no such element exists.
     template<typename Container, std::predicate<const typename Container::value_type &> Predicate>
-    std::optional<typename Container::value_type> findElement(const Container & elements,
-                                                              Predicate predicate)
+    [[nodiscard]] std::optional<typename Container::value_type>
+      findElement(const Container & elements, Predicate predicate)
     {
         const auto it = std::ranges::find_if(elements, predicate);
         return (it != std::ranges::cend(elements))
@@ -35,7 +35,7 @@ namespace lbnl
     //! \param value The value to search for.
     //! \return True if the value is found, false otherwise.
     template<typename Container, typename T>
-    bool contains(const Container & elements, const T & value)
+    [[nodiscard]] bool contains(const Container & elements, const T & value)
     {
         return std::ranges::find(elements, value) != std::ranges::cend(elements);
     }
@@ -45,7 +45,7 @@ namespace lbnl
     //! \param range The range of elements to process.
     //! \return A new container with duplicates removed.
     template<std::ranges::range R>
-    auto unique(const R & range)
+    [[nodiscard]] auto unique(const R & range)
     {
         using ValueType = std::ranges::range_value_t<R>;
 
@@ -63,7 +63,7 @@ namespace lbnl
     //! \param c2 The second container.
     //! \return A vector of pairs, where each pair contains one element from each container.
     template<typename Container1, typename Container2>
-    auto zip(const Container1 & c1, const Container2 & c2)
+    [[nodiscard]] auto zip(const Container1 & c1, const Container2 & c2)
     {
         std::vector<std::pair<typename Container1::value_type, typename Container2::value_type>>
           result;
@@ -93,7 +93,7 @@ namespace lbnl
     //! \param func The transformation function applied to elements that satisfy the predicate.
     //! \return A new vector where matching elements are transformed and others are copied as-is.
     template<std::ranges::range R, typename Predicate, typename Func>
-    auto transform_if(const R & range, Predicate pred, Func func)
+    [[nodiscard]] auto transform_if(const R & range, Predicate pred, Func func)
     {
         using Value = std::ranges::range_value_t<R>;
         std::vector<Value> result;
@@ -119,7 +119,7 @@ namespace lbnl
     //! \param predicate The condition used to determine which elements to include.
     //! \return A vector containing the elements from the input range that satisfy the predicate.
     template<std::ranges::range R, typename Predicate>
-    auto filter(const R & range, Predicate predicate)
+    [[nodiscard]] auto filter(const R & range, Predicate predicate)
     {
         std::vector<std::ranges::range_value_t<R>> result;
         std::ranges::for_each(range, [&](const auto & element) {
@@ -138,7 +138,7 @@ namespace lbnl
     //! \param range2 The second sorted range.
     //! \return A vector containing the merged sorted elements.
     template<std::ranges::range R1, std::ranges::range R2>
-    auto merge(const R1 & range1, const R2 & range2)
+    [[nodiscard]] auto merge(const R1 & range1, const R2 & range2)
     {
         std::vector<std::ranges::range_value_t<R1>> result;
         auto it1 = range1.begin();
@@ -173,22 +173,24 @@ namespace lbnl
     //! \param str The string to split.
     //! \param delimiter The character used to split the string.
     //! \return A vector of substrings.
-    inline std::vector<std::string> split(std::string_view str, char delimiter)
+    template<typename Str, typename CharT = typename std::decay_t<Str>::value_type>
+    [[nodiscard]] std::vector<std::basic_string<CharT>> split(Str && str, CharT delimiter)
     {
-        std::vector<std::string> result;
+        std::basic_string_view<CharT> view{std::forward<Str>(str)};
+        std::vector<std::basic_string<CharT>> result;
 
-        if(str.empty())
+        if(view.empty())
         {
             return result;
         }
 
         size_t start = 0;
-        while(start <= str.size())
+        while(start <= view.size())
         {
-            size_t end = str.find(delimiter, start);
-            if(end == std::string_view::npos)
-                end = str.size();
-            result.emplace_back(str.substr(start, end - start));
+            size_t end = view.find(delimiter, start);
+            if(end == std::basic_string_view<CharT>::npos)
+                end = view.size();
+            result.emplace_back(view.substr(start, end - start));
             start = end + 1;
         }
 
@@ -204,7 +206,7 @@ namespace lbnl
     //! \return A pair of vectors, where the first contains elements that satisfy the predicate, and
     //! the second contains the rest.
     template<std::ranges::range R, typename Predicate>
-    auto partition(const R & range, Predicate predicate)
+    [[nodiscard]] auto partition(const R & range, Predicate predicate)
     {
         std::pair<std::vector<std::ranges::range_value_t<R>>,
                   std::vector<std::ranges::range_value_t<R>>>
@@ -228,7 +230,7 @@ namespace lbnl
     //! \param nested The nested vector to flatten.
     //! \return A single vector containing all elements from the nested vector.
     template<typename T>
-    std::vector<T> flatten(const std::vector<std::vector<T>> & nested)
+    [[nodiscard]] std::vector<T> flatten(const std::vector<std::vector<T>> & nested)
     {
         std::vector<T> result;
         for(const auto & inner : nested)
@@ -243,7 +245,7 @@ namespace lbnl
     //! \param r The range to convert.
     //! \return A vector containing all elements from the range.
     template<std::ranges::input_range R>
-    auto to_vector(R && r)
+    [[nodiscard]] auto to_vector(R && r)
     {
         using T = std::ranges::range_value_t<R>;
         return std::vector<T>(std::ranges::begin(r), std::ranges::end(r));
@@ -256,7 +258,7 @@ namespace lbnl
     //! \param func The transformation function to apply.
     //! \return A vector containing the transformed elements.
     template<std::ranges::input_range R, typename Func>
-    auto transform_to_vector(R && range, Func && func)
+    [[nodiscard]] auto transform_to_vector(R && range, Func && func)
     {
         return to_vector(range | std::views::transform(std::forward<Func>(func)));
     }
