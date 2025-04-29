@@ -72,4 +72,8 @@ TEST(TransformFilterTests, OriginalUnchangedAfterTransformation)
 
     // Ensure the original container is untouched
     EXPECT_EQ(original, copy);
+
+    // Check that the result contains only the transformed value for UUID "1"
+    std::vector<std::string> expected{"X"};
+    EXPECT_EQ(result, expected);
 }
