@@ -12,10 +12,12 @@ namespace lbnl
     // Type trait to detect std::optional<T>
     //
     template<typename T>
-    struct is_std_optional : std::false_type {};
+    struct is_std_optional : std::false_type
+    {};
 
     template<typename T>
-    struct is_std_optional<std::optional<T>> : std::true_type {};
+    struct is_std_optional<std::optional<T>> : std::true_type
+    {};
 
     //
     // Forward declaration of OptionalExt trait — full definition comes after OptionalExt
@@ -30,7 +32,8 @@ namespace lbnl
     class OptionalExt
     {
     public:
-        explicit constexpr OptionalExt(std::optional<T> opt) : m_opt(std::move(opt)) {}
+        explicit constexpr OptionalExt(std::optional<T> opt) : m_opt(std::move(opt))
+        {}
 
         //! Applies a function if this optional contains a value.
         //! The function may return:
@@ -39,22 +42,22 @@ namespace lbnl
         //! - an OptionalExt,
         //! - or void.
         template<typename Func>
-        [[nodiscard]] constexpr auto and_then(Func&& func) const
+        [[nodiscard]] constexpr auto and_then(Func && func) const
         {
-            using RawResult = std::invoke_result_t<Func, const T&>;
+            using RawResult = std::invoke_result_t<Func, const T &>;
 
-            if (!m_opt)
+            if(!m_opt)
             {
-                if constexpr (std::is_void_v<RawResult>)
+                if constexpr(std::is_void_v<RawResult>)
                 {
                     return OptionalExt<std::monostate>(std::nullopt);
                 }
-                else if constexpr (is_std_optional<RawResult>::value)
+                else if constexpr(is_std_optional<RawResult>::value)
                 {
                     using Inner = typename RawResult::value_type;
                     return OptionalExt<Inner>(std::nullopt);
                 }
-                else if constexpr (is_optional_ext<RawResult>::value)
+                else if constexpr(is_optional_ext<RawResult>::value)
                 {
                     using Inner = typename RawResult::value_type;
                     return OptionalExt<Inner>(std::nullopt);
@@ -65,7 +68,7 @@ namespace lbnl
                 }
             }
 
-            if constexpr (std::is_void_v<RawResult>)
+            if constexpr(std::is_void_v<RawResult>)
             {
                 std::invoke(std::forward<Func>(func), *m_opt);
                 return OptionalExt<std::monostate>(std::monostate{});
@@ -74,12 +77,12 @@ namespace lbnl
             {
                 auto result = std::invoke(std::forward<Func>(func), *m_opt);
 
-                if constexpr (is_std_optional<RawResult>::value)
+                if constexpr(is_std_optional<RawResult>::value)
                 {
                     using Inner = typename RawResult::value_type;
                     return OptionalExt<Inner>(result);
                 }
-                else if constexpr (is_optional_ext<RawResult>::value)
+                else if constexpr(is_optional_ext<RawResult>::value)
                 {
                     return result;
                 }
@@ -93,13 +96,13 @@ namespace lbnl
         //! Returns current value if present, otherwise calls fallback function.
         //! Works with both value-returning and void-returning fallbacks.
         template<typename Func>
-        [[nodiscard]] constexpr auto or_else(Func&& func) const
+        [[nodiscard]] constexpr auto or_else(Func && func) const
         {
             using Result = std::invoke_result_t<Func>;
 
-            if constexpr (std::is_void_v<Result>)
+            if constexpr(std::is_void_v<Result>)
             {
-                if (!m_opt)
+                if(!m_opt)
                 {
                     std::invoke(std::forward<Func>(func));
                 }
@@ -108,7 +111,7 @@ namespace lbnl
             else
             {
                 using ReturnType = std::decay_t<Result>;
-                if (m_opt)
+                if(m_opt)
                 {
                     return OptionalExt<ReturnType>(*m_opt);
                 }
@@ -119,8 +122,19 @@ namespace lbnl
             }
         }
 
+        //! Returns the contained value if present, or a fallback value otherwise.
+        //!
+        //! \tparam U A type convertible to T, used as a fallback if the optional is empty.
+        //! \param fallback The value to return if this OptionalExt does not contain a value.
+        //! \return The contained value if available, or the fallback value.
+        template<typename U>
+        [[nodiscard]] constexpr T value_or(U && fallback) const
+        {
+            return m_opt.value_or(std::forward<U>(fallback));
+        }
+
         //! Access the underlying std::optional<T>
-        [[nodiscard]] constexpr const std::optional<T>& raw() const noexcept
+        [[nodiscard]] constexpr const std::optional<T> & raw() const noexcept
         {
             return m_opt;
         }
@@ -133,16 +147,18 @@ namespace lbnl
     // Trait to detect lbnl::OptionalExt<T>
     //
     template<typename T>
-    struct is_optional_ext : std::false_type {};
+    struct is_optional_ext : std::false_type
+    {};
 
     template<typename T>
-    struct is_optional_ext<lbnl::OptionalExt<T>> : std::true_type {};
+    struct is_optional_ext<lbnl::OptionalExt<T>> : std::true_type
+    {};
 
     //
     // Converts a std::optional<T> into an OptionalExt<T> to enable chaining
     //
     template<typename T>
-    [[nodiscard]] constexpr auto extend(const std::optional<T>& opt)
+    [[nodiscard]] constexpr auto extend(const std::optional<T> & opt)
     {
         return OptionalExt<T>(opt);
     }
@@ -151,8 +167,8 @@ namespace lbnl
     // Pipe operator (|) for std::optional<T>: applies transformation if value exists
     //
     template<typename T, typename Func>
-    [[nodiscard]] constexpr auto operator|(const std::optional<T>& opt, Func&& func)
-        -> std::optional<std::invoke_result_t<Func, const T&>>
+    [[nodiscard]] constexpr auto operator|(const std::optional<T> & opt, Func && func)
+      -> std::optional<std::invoke_result_t<Func, const T &>>
     {
         return extend(opt).and_then(std::forward<Func>(func)).raw();
     }
@@ -161,7 +177,7 @@ namespace lbnl
     // Or operator (||) for std::optional<T>: returns fallback if optional is empty
     //
     template<typename T, typename Func>
-    [[nodiscard]] constexpr auto operator||(const std::optional<T>& opt, Func&& func) -> T
+    [[nodiscard]] constexpr auto operator||(const std::optional<T> & opt, Func && func) -> T
     {
         return opt ? *opt : std::invoke(std::forward<Func>(func));
     }
@@ -180,13 +196,13 @@ namespace lbnl
     //
     template<typename T, typename Variant>
     [[nodiscard]] constexpr std::enable_if_t<is_in_variant_v<T, Variant>, std::optional<T>>
-    get_if_opt(const Variant& variant)
+      get_if_opt(const Variant & variant)
     {
-        if (const auto* ptr = std::get_if<T>(&variant))
+        if(const auto * ptr = std::get_if<T>(&variant))
         {
             return *ptr;
         }
         return std::nullopt;
     }
 
-} // namespace lbnl
+}   // namespace lbnl
