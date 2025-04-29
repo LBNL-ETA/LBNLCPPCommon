@@ -21,7 +21,7 @@ namespace lbnl
     // Returns an optional value if the key exists in the map.
     //
     template<AssociativeContainer Map>
-    [[nodiscard]] constexpr auto mapLookupByKey(const Map& m, const typename Map::key_type& key)
+    [[nodiscard]] constexpr auto map_lookup_by_key(const Map& m, const typename Map::key_type& key)
       -> std::optional<typename Map::mapped_type>
     {
         auto it = m.find(key);
@@ -34,7 +34,7 @@ namespace lbnl
     // Returns an optional key if a given value exists in the map.
     //
     template<AssociativeContainer Map>
-    [[nodiscard]] constexpr auto mapLookupByValue(const Map& m, const typename Map::mapped_type& value)
+    [[nodiscard]] constexpr auto map_lookup_by_value(const Map& m, const typename Map::mapped_type& value)
       -> std::optional<typename Map::key_type>
     {
         using Pair = typename Map::value_type;
@@ -48,7 +48,7 @@ namespace lbnl
     // Extracts all keys from the map as a vector.
     //
     template<AssociativeContainer Map>
-    [[nodiscard]] constexpr auto mapKeys(const Map& m) -> std::vector<typename Map::key_type>
+    [[nodiscard]] constexpr auto map_keys(const Map& m) -> std::vector<typename Map::key_type>
     {
         std::vector<typename Map::key_type> keys;
         keys.reserve(m.size());
@@ -63,7 +63,7 @@ namespace lbnl
     // Extracts all values from the map as a vector.
     //
     template<AssociativeContainer Map>
-    [[nodiscard]] constexpr auto mapValues(const Map& m) -> std::vector<typename Map::mapped_type>
+    [[nodiscard]] constexpr auto map_values(const Map& m) -> std::vector<typename Map::mapped_type>
     {
         std::vector<typename Map::mapped_type> values;
         values.reserve(m.size());

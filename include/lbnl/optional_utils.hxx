@@ -13,7 +13,7 @@ namespace lbnl
     // - T must support default construction, operator+=, and operator/ with scalar.
     //
     template<typename T>
-    [[nodiscard]] constexpr std::optional<T> averageOptional(const std::vector<std::optional<T>>& values)
+    [[nodiscard]] constexpr std::optional<T> average_optional(const std::vector<std::optional<T>>& values)
     {
         T sum{};
         size_t count = 0;

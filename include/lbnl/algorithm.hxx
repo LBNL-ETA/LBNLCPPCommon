@@ -20,7 +20,7 @@ namespace lbnl
     //! std::nullopt if no such element exists.
     template<typename Container, std::predicate<const typename Container::value_type &> Predicate>
     [[nodiscard]] constexpr std::optional<std::decay_t<typename Container::value_type>>
-      findElement(const Container & elements, Predicate predicate)
+      find_element(const Container & elements, Predicate predicate)
     {
         auto it = std::ranges::find_if(elements, predicate);
         if(it != std::ranges::cend(elements))
