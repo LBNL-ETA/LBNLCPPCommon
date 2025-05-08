@@ -66,7 +66,7 @@ target_link_libraries(MyProject PRIVATE LBNLCPPCommon)
 int main() {
     std::vector<int> numbers = {1, 2, 3, 4, 5};
 
-    auto found = common_utils::findElement(numbers, [](int x) { return x > 3; });
+    auto found = common_utils::find_element(numbers, [](int x) { return x > 3; });
 
     if (found) {
         std::cout << "Found: " << *found << '\n';  // Output: Found: 4
