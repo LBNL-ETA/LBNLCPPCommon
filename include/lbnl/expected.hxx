@@ -81,6 +81,29 @@ namespace lbnl {
             }
         }
 
+        // Inside ExpectedExt<T, E>
+        template<typename Func>
+        [[nodiscard]] constexpr auto map(Func&& func) const {
+            using U = std::invoke_result_t<Func, const T&>;
+
+            if (has_value()) {
+                return ExpectedExt<U, E>(std::invoke(std::forward<Func>(func), value()));
+            } else {
+                return ExpectedExt<U, E>(error());
+            }
+        }
+
+        template<typename Func>
+        [[nodiscard]] constexpr auto map_error(Func&& func) const {
+            using E2 = std::invoke_result_t<Func, const E&>;
+
+            if (has_value()) {
+                return ExpectedExt<T, E2>(value());
+            } else {
+                return ExpectedExt<T, E2>(std::invoke(std::forward<Func>(func), error()));
+            }
+        }
+
     private:
         std::variant<T, E> m_data;
     };
