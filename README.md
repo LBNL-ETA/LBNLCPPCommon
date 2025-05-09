@@ -12,15 +12,18 @@
 - ✅ **No dependencies** required
 
 ## 📁 Folder Structure
-\`\`\`
+```text
 LBNLCPPCommon/
-│── include/
-│   ├── lbnl/
-│   │   ├── algorithm.hxx
-│   │   ├── optional.hxx
-│── CMakeLists.txt
-│── README.md
-\`\`\`
+├── include/
+│   └── lbnl/
+│       ├── algorithm.hxx
+│       ├── expected.hxx
+│       ├── map_utils.hxx
+│       ├── optional.hxx
+│       └── optional_utils.hxx
+├── CMakeLists.txt
+└── README.md
+```
 
 ## ⚙️ Installation & Usage
 
@@ -66,7 +69,7 @@ target_link_libraries(MyProject PRIVATE LBNLCPPCommon)
 int main() {
     std::vector<int> numbers = {1, 2, 3, 4, 5};
 
-    auto found = common_utils::find_element(numbers, [](int x) { return x > 3; });
+    auto found = lbnl::find_element(numbers, [](int x) { return x > 3; });
 
     if (found) {
         std::cout << "Found: " << *found << '\n';  // Output: Found: 4
