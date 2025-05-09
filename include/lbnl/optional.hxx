@@ -133,6 +133,28 @@ namespace lbnl
             return m_opt.value_or(std::forward<U>(fallback));
         }
 
+        template<typename Func>
+        [[nodiscard]] constexpr auto map(Func && func) const
+        {
+            using U = std::invoke_result_t<Func, const T &>;
+
+            if(m_opt.has_value())
+            {
+                return OptionalExt<U>(std::invoke(std::forward<Func>(func), *m_opt));
+            }
+            else
+            {
+                return OptionalExt<U>(std::nullopt);
+            }
+        }
+
+        // C++23-like synonym for map
+        template<typename Func>
+        [[nodiscard]] constexpr auto transform(Func && func) const
+        {
+            return map(std::forward<Func>(func));
+        }
+
         //! Access the underlying std::optional<T>
         [[nodiscard]] constexpr const std::optional<T> & raw() const noexcept
         {
