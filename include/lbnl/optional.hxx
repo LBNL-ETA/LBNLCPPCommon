@@ -42,7 +42,7 @@ namespace lbnl
         //! - an OptionalExt,
         //! - or void.
         template<typename Func>
-        [[nodiscard]] constexpr auto and_then(Func && func) const
+        constexpr auto and_then(Func && func) const
         {
             using RawResult = std::invoke_result_t<Func, const T &>;
 
@@ -96,7 +96,7 @@ namespace lbnl
         //! Returns current value if present, otherwise calls fallback function.
         //! Works with both value-returning and void-returning fallbacks.
         template<typename Func>
-        [[nodiscard]] constexpr auto or_else(Func && func) const
+        constexpr auto or_else(Func && func) const
         {
             using Result = std::invoke_result_t<Func>;
 
@@ -134,7 +134,7 @@ namespace lbnl
         }
 
         template<typename Func>
-        [[nodiscard]] constexpr auto map(Func && func) const
+        constexpr auto map(Func && func) const
         {
             using U = std::invoke_result_t<Func, const T &>;
 
@@ -150,7 +150,7 @@ namespace lbnl
 
         // C++23-like synonym for map
         template<typename Func>
-        [[nodiscard]] constexpr auto transform(Func && func) const
+        constexpr auto transform(Func && func) const
         {
             return map(std::forward<Func>(func));
         }
