@@ -110,7 +110,7 @@ TEST(LazyEvaluatorTest, ParallelAccessSameKey)
     for(int i = 0; i < numThreads; ++i)
     {
         threads.emplace_back(
-          [&evaluator, &results, i]() { results[i] = evaluator.get(sharedKey); });
+          [&evaluator, &results, i, sharedKey]() { results[i] = evaluator.get(sharedKey); });
     }
 
     for(auto & t : threads)
