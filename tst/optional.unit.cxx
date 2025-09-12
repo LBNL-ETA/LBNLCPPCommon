@@ -54,9 +54,7 @@ TEST(OptionalExtTest, ValueOr_WithValue)
     using namespace lbnl;
 
     std::optional<int> opt = 10;
-    auto result = extend(opt)
-                    .and_then([](int x) { return x * 2; })
-                    .value_or(0);
+    auto result = extend(opt).and_then([](int x) { return x * 2; }).value_or(0);
 
     EXPECT_EQ(result, 20);
 }
@@ -67,9 +65,7 @@ TEST(OptionalExtTest, ValueOr_Empty)
     using namespace lbnl;
 
     std::optional<int> opt;
-    auto result = extend(opt)
-                    .and_then([](int x) { return x * 2; })
-                    .value_or(42);
+    auto result = extend(opt).and_then([](int x) { return x * 2; }).value_or(42);
 
     EXPECT_EQ(result, 42);
 }
@@ -86,4 +82,21 @@ TEST(OptionalExtTest, ValueOr_Direct)
 
     std::optional<int> empty;
     EXPECT_EQ(extend(empty).value_or(99), 99);
+}
+
+TEST(OptionalExt, AndThen_Void_OnEmpty)
+{
+    std::optional<int> o;   // empty
+    auto r = lbnl::extend(o).and_then([](int) noexcept { /* returns void */ });
+    // r is OptionalExt<std::monostate>
+    EXPECT_FALSE(r.raw().has_value());   // use raw() to reach the underlying std::optional
+    // or: EXPECT_EQ(r.value_or(std::monostate{}), std::monostate{});  // also passes
+}
+
+TEST(OptionalExt, AndThen_Void_OnValue)
+{
+    std::optional<int> o = 42;   // has value
+    auto r = lbnl::extend(o).and_then([](int) noexcept { /* returns void */ });
+    EXPECT_TRUE(r.raw().has_value());   // monostate engaged
+    // or: EXPECT_EQ(r.value_or(std::monostate{}), std::monostate{});
 }
