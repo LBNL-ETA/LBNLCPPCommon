@@ -92,27 +92,27 @@ namespace lbnl
         template<typename Func>
         [[nodiscard]] constexpr auto and_then(Func && func) const
         {
-            using RawResult = std::remove_cvref_t<std::invoke_result_t<Func, const T &>>;
+            using Raw = std::invoke_result_t<Func, const T &>;
 
-            if(!has_value())
+            if constexpr(is_expected_ext<Raw>::value)
             {
-                if constexpr(is_expected_ext<RawResult>::value)
+                using U = Raw::value_type;
+                using Ret = ExpectedExt<U, E>;
+                if(!has_value())
                 {
-                    return RawResult(error());
+                    return Ret(error());
                 }
-                else
-                {
-                    return ExpectedExt<RawResult, E>(error());
-                }
-            }
-
-            if constexpr(is_expected_ext<RawResult>::value)
-            {
-                return std::invoke(std::forward<Func>(func), value());
+                return std::invoke(std::forward<Func>(func), value());   // already ExpectedExt<U,E>
             }
             else
             {
-                return ExpectedExt<RawResult, E>(std::invoke(std::forward<Func>(func), value()));
+                using U = Raw;
+                using Ret = ExpectedExt<U, E>;
+                if(!has_value())
+                {
+                    return Ret(error());
+                }
+                return Ret(std::invoke(std::forward<Func>(func), value()));
             }
         }
 
