@@ -1,3 +1,4 @@
+// optional.hxx
 #pragma once
 
 #include <optional>
@@ -185,21 +186,14 @@ namespace lbnl
         return OptionalExt<T>(opt);
     }
 
-    //
-    // Pipe operator (|) for std::optional<T>: applies transformation if value exists
-    //
     template<typename T, typename Func>
     [[nodiscard]] constexpr auto operator|(const std::optional<T> & opt, Func && func)
-      -> std::optional<std::invoke_result_t<Func, const T &>>
     {
         return extend(opt).and_then(std::forward<Func>(func)).raw();
     }
 
-    //
-    // Or operator (||) for std::optional<T>: returns fallback if optional is empty
-    //
     template<typename T, typename Func>
-    [[nodiscard]] constexpr auto operator||(const std::optional<T> & opt, Func && func) -> T
+    [[nodiscard]] constexpr T operator||(const std::optional<T> & opt, Func && func)
     {
         return opt ? *opt : std::invoke(std::forward<Func>(func));
     }

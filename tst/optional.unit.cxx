@@ -1,38 +1,33 @@
 #include <gtest/gtest.h>
 
 #include <lbnl/optional.hxx>
+#include <lbnl/optional_pipe_import.hxx>
 
 
-// Test operator| with a valid optional
+// Test | with a valid optional
 TEST(OptionalTest, OperatorPipe_WithValue)
 {
-    using namespace lbnl;
-
-    std::optional opt_value = 3;
-    auto result = opt_value | [](int x) { return x + 2; };
+    const std::optional opt_value{3};
+    const auto result = opt_value | [](const int x) { return x + 2; };
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), 5);
 }
 
-// Test operator| with an empty optional
+// Test | with an empty optional
 TEST(OptionalTest, OperatorPipe_Empty)
 {
-    using namespace lbnl;
-
     std::optional<int> opt_value;
-    auto result = opt_value | [](int x) { return x + 2; };
+    const auto result = opt_value | [](const int x) { return x + 2; };
 
     EXPECT_FALSE(result.has_value());
 }
 
-// Test operator|| with a valid optional
+// Test || with a valid optional
 TEST(OptionalTest, OperatorOr_WithValue)
 {
-    using namespace lbnl;
-
     std::optional opt_value = 7;
-    auto result = opt_value || [] { return 20; };
+    const auto result = opt_value || [] { return 20; };
 
     EXPECT_EQ(result, 7);
 }
@@ -40,10 +35,8 @@ TEST(OptionalTest, OperatorOr_WithValue)
 // Test operator|| with an empty optional
 TEST(OptionalTest, OperatorOr_Empty)
 {
-    using namespace lbnl;
-
     std::optional<int> opt_value;
-    auto result = opt_value || [] { return 20; };
+    const auto result = opt_value || [] { return 20; };
 
     EXPECT_EQ(result, 20);
 }
@@ -51,10 +44,8 @@ TEST(OptionalTest, OperatorOr_Empty)
 // Test value_or with a value present
 TEST(OptionalExtTest, ValueOr_WithValue)
 {
-    using namespace lbnl;
-
     std::optional opt = 10;
-    auto result = extend(opt).and_then([](int x) { return x * 2; }).value_or(0);
+    auto result = lbnl::extend(opt).and_then([](const int x) { return x * 2; }).value_or(0);
 
     EXPECT_EQ(result, 20);
 }
@@ -62,10 +53,8 @@ TEST(OptionalExtTest, ValueOr_WithValue)
 // Test value_or with an empty optional
 TEST(OptionalExtTest, ValueOr_Empty)
 {
-    using namespace lbnl;
-
     std::optional<int> opt;
-    auto result = extend(opt).and_then([](int x) { return x * 2; }).value_or(42);
+    auto result = lbnl::extend(opt).and_then([](const int x) { return x * 2; }).value_or(42);
 
     EXPECT_EQ(result, 42);
 }
@@ -73,15 +62,13 @@ TEST(OptionalExtTest, ValueOr_Empty)
 // Test value_or directly on OptionalExt (no and_then)
 TEST(OptionalExtTest, ValueOr_Direct)
 {
-    using namespace lbnl;
-
     std::optional opt = 5;
-    auto ext = extend(opt);
+    auto ext = lbnl::extend(opt);
 
     EXPECT_EQ(ext.value_or(99), 5);
 
     std::optional<int> empty;
-    EXPECT_EQ(extend(empty).value_or(99), 99);
+    EXPECT_EQ(lbnl::extend(empty).value_or(99), 99);
 }
 
 TEST(OptionalExt, AndThen_Void_OnEmpty)
