@@ -26,6 +26,59 @@ namespace lbnl
     template<typename T>
     struct is_optional_ext;
 
+    template<typename U>
+    class OptionalExt;
+
+    namespace detail
+    {
+
+        template<class R>
+        constexpr auto to_ext_empty()
+        {
+            using RR = std::remove_cvref_t<R>;
+            if constexpr(std::is_void_v<RR>)
+            {
+                return OptionalExt<std::monostate>(std::nullopt);
+            }
+            else if constexpr(is_std_optional<RR>::value)
+            {
+                using U = typename RR::value_type;
+                return OptionalExt<U>(std::nullopt);
+            }
+            else if constexpr(is_optional_ext<RR>::value)
+            {
+                using U = typename RR::value_type;
+                return OptionalExt<U>(std::nullopt);
+            }
+            else
+            {
+                using U = RR;
+                return OptionalExt<U>(std::nullopt);
+            }
+        }
+
+        template<class R>
+        constexpr auto to_ext_from(R && r)
+        {
+            using RR = std::remove_cvref_t<R>;
+            if constexpr(is_std_optional<RR>::value)
+            {
+                using U = typename RR::value_type;
+                return OptionalExt<U>(std::forward<R>(r));
+            }
+            else if constexpr(is_optional_ext<RR>::value)
+            {
+                return std::forward<R>(r);   // already OptionalExt<U>
+            }
+            else
+            {
+                using U = RR;
+                return OptionalExt<U>(std::forward<R>(r));
+            }
+        }
+
+    }   // namespace detail
+
     //
     // OptionalExt: Enables monadic-style chaining on std::optional<T>
     //
@@ -45,52 +98,23 @@ namespace lbnl
         template<typename Func>
         constexpr auto and_then(Func && func) const
         {
-            using RawResult = std::invoke_result_t<Func, const T &>;
+            using Raw = std::invoke_result_t<Func, const T &>;
+            using RR = std::remove_cvref_t<Raw>;
 
             if(!m_opt)
             {
-                if constexpr(std::is_void_v<RawResult>)
-                {
-                    return OptionalExt<std::monostate>(std::nullopt);
-                }
-                else if constexpr(is_std_optional<RawResult>::value)
-                {
-                    using Inner = typename RawResult::value_type;
-                    return OptionalExt<Inner>(std::nullopt);
-                }
-                else if constexpr(is_optional_ext<RawResult>::value)
-                {
-                    using Inner = typename RawResult::value_type;
-                    return OptionalExt<Inner>(std::nullopt);
-                }
-                else
-                {
-                    return OptionalExt<RawResult>(std::nullopt);
-                }
+                return detail::to_ext_empty<RR>();
             }
 
-            if constexpr(std::is_void_v<RawResult>)
+            if constexpr(std::is_void_v<RR>)
             {
                 std::invoke(std::forward<Func>(func), *m_opt);
                 return OptionalExt<std::monostate>(std::monostate{});
             }
             else
             {
-                auto result = std::invoke(std::forward<Func>(func), *m_opt);
-
-                if constexpr(is_std_optional<RawResult>::value)
-                {
-                    using Inner = typename RawResult::value_type;
-                    return OptionalExt<Inner>(result);
-                }
-                else if constexpr(is_optional_ext<RawResult>::value)
-                {
-                    return result;
-                }
-                else
-                {
-                    return OptionalExt<RawResult>(result);
-                }
+                auto r = std::invoke(std::forward<Func>(func), *m_opt);
+                return detail::to_ext_from(std::move(r));
             }
         }
 
