@@ -95,6 +95,8 @@ namespace lbnl
 
         //! Returns current value if present, otherwise calls fallback function.
         //! Works with both value-returning and void-returning fallbacks.
+        //! For void fallbacks: executes side effect and returns OptionalExt<std::monostate>.
+        //! For value fallbacks: the function must return T or something convertible to T.
         template<typename Func>
         [[nodiscard]] constexpr auto or_else(Func && func) const
         {
@@ -110,14 +112,13 @@ namespace lbnl
             }
             else
             {
-                using ReturnType = std::decay_t<Result>;
                 if(m_opt)
                 {
-                    return OptionalExt(*m_opt);
+                    return *this;
                 }
                 else
                 {
-                    return OptionalExt(std::invoke(std::forward<Func>(func)));
+                    return OptionalExt<T>(std::invoke(std::forward<Func>(func)));
                 }
             }
         }
