@@ -7,6 +7,21 @@
 
 namespace lbnl {
 
+    //
+    // Unexpected<E>: wrapper to disambiguate error values from success values
+    // Similar to C++23's std::unexpected
+    //
+    template<typename E>
+    struct Unexpected {
+        E error;
+
+        constexpr explicit Unexpected(E e) : error(std::move(e)) {}
+    };
+
+    // Deduction guide for Unexpected
+    template<typename E>
+    Unexpected(E) -> Unexpected<E>;
+
     // Forward declaration
     template<typename T, typename E>
     class ExpectedExt;
@@ -30,7 +45,7 @@ namespace lbnl {
         using error_type = E;
 
         constexpr ExpectedExt(T value) : m_data(std::move(value)) {}
-        constexpr ExpectedExt(E error) : m_data(std::move(error)) {}
+        constexpr ExpectedExt(Unexpected<E> err) : m_data(std::move(err.error)) {}
 
         [[nodiscard]] constexpr bool has_value() const noexcept {
             return std::holds_alternative<T>(m_data);
@@ -61,7 +76,7 @@ namespace lbnl {
             using RawResult = std::invoke_result_t<Func, const T&>;
 
             if (!has_value()) {
-                return ExpectedExt<T, E>(error());
+                return ExpectedExt<T, E>(Unexpected<E>(error()));
             }
 
             if constexpr (is_expected_ext<RawResult>::value) {
@@ -89,7 +104,7 @@ namespace lbnl {
             if (has_value()) {
                 return ExpectedExt<U, E>(std::invoke(std::forward<Func>(func), value()));
             } else {
-                return ExpectedExt<U, E>(error());
+                return ExpectedExt<U, E>(Unexpected<E>(error()));
             }
         }
 
@@ -100,7 +115,7 @@ namespace lbnl {
             if (has_value()) {
                 return ExpectedExt<T, E2>(value());
             } else {
-                return ExpectedExt<T, E2>(std::invoke(std::forward<Func>(func), error()));
+                return ExpectedExt<T, E2>(Unexpected<E2>(std::invoke(std::forward<Func>(func), error())));
             }
         }
 
@@ -118,7 +133,7 @@ namespace lbnl {
 
     template<typename T, typename E>
     [[nodiscard]] constexpr ExpectedExt<T, E> make_unexpected(E error) {
-        return ExpectedExt<T, E>(std::move(error));
+        return ExpectedExt<T, E>(Unexpected<E>(std::move(error)));
     }
 
     //
