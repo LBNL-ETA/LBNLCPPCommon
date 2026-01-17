@@ -113,11 +113,11 @@ namespace lbnl
                 using ReturnType = std::decay_t<Result>;
                 if(m_opt)
                 {
-                    return OptionalExt<ReturnType>(*m_opt);
+                    return OptionalExt(*m_opt);
                 }
                 else
                 {
-                    return OptionalExt<ReturnType>(std::invoke(std::forward<Func>(func)));
+                    return OptionalExt(std::invoke(std::forward<Func>(func)));
                 }
             }
         }
