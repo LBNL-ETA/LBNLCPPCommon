@@ -31,6 +31,7 @@ namespace lbnl
     }
 
     //! Checks if the container contains a specific value.
+    //! Note: This is a C++20 compatible implementation. In C++23, prefer std::ranges::contains.
     //! \tparam Container The type of the container.
     //! \tparam T The type of the value to search for.
     //! \param elements The container to search through.
@@ -43,9 +44,11 @@ namespace lbnl
     }
 
     //! Removes duplicate elements from a container.
+    //! Note: This function sorts the elements before removing duplicates,
+    //! so the original order is NOT preserved. The result is sorted.
     //! \tparam R The type of the range (must satisfy std::ranges::range).
     //! \param range The range of elements to process.
-    //! \return A new container with duplicates removed.
+    //! \return A new sorted vector with duplicates removed.
     template<std::ranges::range R>
     [[nodiscard]] constexpr auto unique(const R & range)
     {
@@ -70,6 +73,11 @@ namespace lbnl
         using T1 = std::ranges::range_value_t<R1>;
         using T2 = std::ranges::range_value_t<R2>;
         std::vector<std::pair<T1, T2>> result;
+
+        if constexpr(std::ranges::sized_range<R1> && std::ranges::sized_range<R2>)
+        {
+            result.reserve(std::min(std::ranges::size(r1), std::ranges::size(r2)));
+        }
 
         auto it1 = std::ranges::begin(r1);
         auto it2 = std::ranges::begin(r2);
@@ -156,6 +164,10 @@ namespace lbnl
     [[nodiscard]] constexpr auto filter(const R & range, Predicate predicate)
     {
         std::vector<std::ranges::range_value_t<R>> result;
+        if constexpr(std::ranges::sized_range<R>)
+        {
+            result.reserve(std::ranges::size(range));
+        }
         std::ranges::for_each(range, [&](const auto & element) {
             if(predicate(element))
             {
@@ -166,6 +178,8 @@ namespace lbnl
     }
 
     //! Merges two sorted ranges into a single sorted range.
+    //! \pre Both range1 and range2 MUST be sorted in ascending order.
+    //!      Passing unsorted ranges results in undefined behavior.
     //! \tparam R1 The type of the first range.
     //! \tparam R2 The type of the second range.
     //! \param range1 The first sorted range.

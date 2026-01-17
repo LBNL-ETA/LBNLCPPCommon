@@ -32,8 +32,46 @@ namespace lbnl
     class OptionalExt
     {
     public:
+        using value_type = T;
+
         explicit constexpr OptionalExt(std::optional<T> opt) : m_opt(std::move(opt))
         {}
+
+        //! Check if the optional contains a value
+        [[nodiscard]] constexpr bool has_value() const noexcept
+        {
+            return m_opt.has_value();
+        }
+
+        //! Explicit bool conversion operator
+        [[nodiscard]] constexpr explicit operator bool() const noexcept
+        {
+            return has_value();
+        }
+
+        //! Access the contained value (undefined behavior if empty)
+        [[nodiscard]] constexpr const T & operator*() const noexcept
+        {
+            return *m_opt;
+        }
+
+        //! Access the contained value (undefined behavior if empty)
+        [[nodiscard]] constexpr T & operator*() noexcept
+        {
+            return *m_opt;
+        }
+
+        //! Access member of the contained value (undefined behavior if empty)
+        [[nodiscard]] constexpr const T * operator->() const noexcept
+        {
+            return m_opt.operator->();
+        }
+
+        //! Access member of the contained value (undefined behavior if empty)
+        [[nodiscard]] constexpr T * operator->() noexcept
+        {
+            return m_opt.operator->();
+        }
 
         //! Applies a function if this optional contains a value.
         //! The function may return:

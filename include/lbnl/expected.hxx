@@ -51,6 +51,17 @@ namespace lbnl {
             return std::holds_alternative<T>(m_data);
         }
 
+        //! Explicit bool conversion operator
+        [[nodiscard]] constexpr explicit operator bool() const noexcept {
+            return has_value();
+        }
+
+        //! Returns the contained value if present, or a fallback value otherwise.
+        template<typename U>
+        [[nodiscard]] constexpr T value_or(U&& fallback) const {
+            return has_value() ? value() : static_cast<T>(std::forward<U>(fallback));
+        }
+
         [[nodiscard]] constexpr const T& value() const {
             return std::get<T>(m_data);
         }
@@ -75,13 +86,16 @@ namespace lbnl {
         [[nodiscard]] constexpr auto and_then(Func&& func) const {
             using RawResult = std::invoke_result_t<Func, const T&>;
 
-            if (!has_value()) {
-                return ExpectedExt<T, E>(Unexpected<E>(error()));
-            }
-
             if constexpr (is_expected_ext<RawResult>::value) {
+                if (!has_value()) {
+                    using U = typename RawResult::value_type;
+                    return ExpectedExt<U, E>(Unexpected<E>(error()));
+                }
                 return std::invoke(std::forward<Func>(func), value());
             } else {
+                if (!has_value()) {
+                    return ExpectedExt<RawResult, E>(Unexpected<E>(error()));
+                }
                 return ExpectedExt<RawResult, E>(std::invoke(std::forward<Func>(func), value()));
             }
         }
