@@ -12,6 +12,7 @@ A header-only C++ library for reusable utility functions
 - **Modern C++20 features** - concepts, ranges, `std::optional`
 - **Lightweight and easy to integrate** with CMake
 - **No dependencies** required beyond the standard library
+- **Thread-safe** where applicable (e.g., LazyEvaluator)
 
 ## Folder Structure
 
@@ -19,13 +20,16 @@ A header-only C++ library for reusable utility functions
 LBNLCPPCommon/
 ├── include/
 │   └── lbnl/
-│       ├── algorithm.hxx       # Container and range algorithms
-│       ├── optional.hxx        # OptionalExt with monadic operations
-│       ├── optional_utils.hxx  # Optional utility functions
-│       ├── expected.hxx        # ExpectedExt for error handling
-│       └── map_utils.hxx       # Associative container utilities
-├── docs/                       # Detailed documentation
-├── tst/                        # Unit tests
+│       ├── algorithm.hxx           # Container and range algorithms
+│       ├── optional.hxx            # OptionalExt with monadic operations
+│       ├── optional_utils.hxx      # Optional utility functions
+│       ├── optional_pipe_import.hxx # Pipe operator imports
+│       ├── expected.hxx            # ExpectedExt for error handling
+│       ├── map_utils.hxx           # Associative container utilities
+│       ├── enum_index_mapper.hxx   # Bidirectional enum-index mapping
+│       └── memoize.hxx             # LazyEvaluator for caching
+├── docs/                           # Detailed documentation
+├── tst/                            # Unit tests
 ├── CMakeLists.txt
 ├── LICENSE
 └── README.md
@@ -82,13 +86,9 @@ if (found) {
 ### Chaining Optional Operations
 
 ```cpp
-#include <lbnl/optional.hxx>
+#include <lbnl/optional_pipe_import.hxx>
 
 std::optional<std::string> input = "42";
-
-// Using pipe operators (| for and_then, || for fallback)
-using lbnl::operator|;
-using lbnl::operator||;
 
 int result = input
     | [](const std::string& s) { return parse_int(s); }  // returns optional<int>
@@ -115,6 +115,21 @@ auto result = safe_divide(10, 2)
 if (result) {
     std::cout << result.value() << '\n';  // 25
 }
+```
+
+### Caching Expensive Computations
+
+```cpp
+#include <lbnl/memoize.hxx>
+
+lbnl::LazyEvaluator<std::string, std::string> fileCache(
+    [](const std::string& path) {
+        return read_file_content(path);  // expensive operation
+    }
+);
+
+auto content1 = fileCache("config.txt");  // reads file
+auto content2 = fileCache("config.txt");  // returns cached content
 ```
 
 ## Library Components
@@ -152,7 +167,7 @@ Extended optional with C++23-like monadic operations.
 | `operator\|` | Pipe syntax for and_then |
 | `operator\|\|` | Pipe syntax for fallback |
 
-Also includes `average_optional()` in `optional_utils.hxx` for computing averages of optional vectors.
+Also includes `average_optional()` for computing averages of optional vectors.
 
 ### ExpectedExt ([docs/expected.md](docs/expected.md))
 
@@ -180,6 +195,26 @@ Utilities for associative containers (`std::map`, `std::unordered_map`).
 | `map_keys` | Extract all keys as vector |
 | `map_values` | Extract all values as vector |
 
+### EnumIndexMapper ([docs/enum_index_mapper.md](docs/enum_index_mapper.md))
+
+Bidirectional mapping between enum values and database indices.
+
+| Method | Description |
+|--------|-------------|
+| `to_enum` | Convert index to enum |
+| `to_index` | Convert enum to index |
+| `to_enum_or` | Convert with fallback enum |
+| `to_index_or` | Convert with fallback index |
+
+### LazyEvaluator ([docs/memoize.md](docs/memoize.md))
+
+Thread-safe memoization for expensive computations.
+
+| Method | Description |
+|--------|-------------|
+| `operator()` | Get or compute value |
+| `get` | Get or compute value (returns reference) |
+
 ## Documentation
 
 Detailed documentation for each component is available in the `docs/` folder:
@@ -188,6 +223,8 @@ Detailed documentation for each component is available in the `docs/` folder:
 - [OptionalExt](docs/optional.md)
 - [ExpectedExt](docs/expected.md)
 - [Map Utilities](docs/map_utils.md)
+- [EnumIndexMapper](docs/enum_index_mapper.md)
+- [LazyEvaluator (Memoize)](docs/memoize.md)
 
 ## Requirements
 

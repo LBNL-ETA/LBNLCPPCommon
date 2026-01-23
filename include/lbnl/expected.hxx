@@ -1,3 +1,4 @@
+// cpp
 #pragma once
 
 #include <variant>
@@ -5,17 +6,20 @@
 #include <functional>
 #include <utility>
 
-namespace lbnl {
+namespace lbnl
+{
 
     //
     // Unexpected<E>: wrapper to disambiguate error values from success values
     // Similar to C++23's std::unexpected
     //
     template<typename E>
-    struct Unexpected {
+    struct Unexpected
+    {
         E error;
 
-        constexpr explicit Unexpected(E e) : error(std::move(e)) {}
+        constexpr explicit Unexpected(E e) : error(std::move(e))
+        {}
     };
 
     // Deduction guide for Unexpected
@@ -30,52 +34,78 @@ namespace lbnl {
     // Trait to detect if something is an ExpectedExt
     //
     template<typename T>
-    struct is_expected_ext : std::false_type {};
+    struct is_expected_ext : std::false_type
+    {};
 
     template<typename T, typename E>
-    struct is_expected_ext<ExpectedExt<T, E>> : std::true_type {};
+    struct is_expected_ext<ExpectedExt<T, E>> : std::true_type
+    {};
 
     //
     // ExpectedExt<T, E>: like std::expected<T, E> in C++23
     //
     template<typename T, typename E>
-    class ExpectedExt {
+    class ExpectedExt
+    {
     public:
         using value_type = T;
         using error_type = E;
 
-        constexpr ExpectedExt(T value) : m_data(std::move(value)) {}
-        constexpr ExpectedExt(Unexpected<E> err) : m_data(std::move(err.error)) {}
+        // defaulted special members
+        constexpr ExpectedExt() = delete;
+        constexpr ExpectedExt(const ExpectedExt &) = default;
+        constexpr ExpectedExt(ExpectedExt &&) = default;
+        constexpr ExpectedExt & operator=(const ExpectedExt &) = default;
+        constexpr ExpectedExt & operator=(ExpectedExt &&) = default;
+        ~ExpectedExt() = default;
 
-        [[nodiscard]] constexpr bool has_value() const noexcept {
+        // Construct from value (implicit)
+        constexpr ExpectedExt(T value) : m_data(std::move(value))
+        {}
+
+        // Construct from Unexpected wrapper (implicit) - disambiguates errors
+        constexpr ExpectedExt(Unexpected<E> err) : m_data(std::move(err.error))
+        {}
+
+        // Explicit single-arg constructor for error (alternative to Unexpected)
+        constexpr explicit ExpectedExt(E error) : m_data(std::move(error))
+        {}
+
+        [[nodiscard]] constexpr bool has_value() const noexcept
+        {
             return std::holds_alternative<T>(m_data);
         }
 
-        //! Explicit bool conversion operator
-        [[nodiscard]] constexpr explicit operator bool() const noexcept {
+        [[nodiscard]] constexpr explicit operator bool() const noexcept
+        {
             return has_value();
         }
 
-        //! Returns the contained value if present, or a fallback value otherwise.
+        [[nodiscard]] constexpr const T & value() const
+        {
+            return std::get<T>(m_data);
+        }
+
+        [[nodiscard]] constexpr T & value()
+        {
+            return std::get<T>(m_data);
+        }
+
+        [[nodiscard]] constexpr const E & error() const
+        {
+            return std::get<E>(m_data);
+        }
+
+        [[nodiscard]] constexpr E & error()
+        {
+            return std::get<E>(m_data);
+        }
+
+        //! Returns the contained value or the provided alternative
         template<typename U>
-        [[nodiscard]] constexpr T value_or(U&& fallback) const {
-            return has_value() ? value() : static_cast<T>(std::forward<U>(fallback));
-        }
-
-        [[nodiscard]] constexpr const T& value() const {
-            return std::get<T>(m_data);
-        }
-
-        [[nodiscard]] constexpr T& value() {
-            return std::get<T>(m_data);
-        }
-
-        [[nodiscard]] constexpr const E& error() const {
-            return std::get<E>(m_data);
-        }
-
-        [[nodiscard]] constexpr E& error() {
-            return std::get<E>(m_data);
+        [[nodiscard]] constexpr T value_or(U && alt) const
+        {
+            return has_value() ? value() : static_cast<T>(std::forward<U>(alt));
         }
 
         //! Applies a function to the value if present.
@@ -83,52 +113,71 @@ namespace lbnl {
         //! - another ExpectedExt<U, E>
         //! - a plain value U
         template<typename Func>
-        [[nodiscard]] constexpr auto and_then(Func&& func) const {
-            using RawResult = std::invoke_result_t<Func, const T&>;
+        [[nodiscard]] constexpr auto and_then(Func && func) const
+        {
+            using Raw = std::invoke_result_t<Func, const T &>;
 
-            if constexpr (is_expected_ext<RawResult>::value) {
-                if (!has_value()) {
-                    using U = typename RawResult::value_type;
-                    return ExpectedExt<U, E>(Unexpected<E>(error()));
+            if constexpr(is_expected_ext<Raw>::value)
+            {
+                using U = typename Raw::value_type;
+                using Ret = ExpectedExt<U, E>;
+                if(!has_value())
+                {
+                    return Ret(Unexpected<E>(error()));
                 }
                 return std::invoke(std::forward<Func>(func), value());
-            } else {
-                if (!has_value()) {
-                    return ExpectedExt<RawResult, E>(Unexpected<E>(error()));
+            }
+            else
+            {
+                using Ret = ExpectedExt<Raw, E>;
+                if(!has_value())
+                {
+                    return Ret(Unexpected<E>(error()));
                 }
-                return ExpectedExt<RawResult, E>(std::invoke(std::forward<Func>(func), value()));
+                return Ret(std::invoke(std::forward<Func>(func), value()));
             }
         }
 
         //! Fallback handler if there's an error
         template<typename Func>
-        [[nodiscard]] constexpr auto or_else(Func&& func) const {
-            if (has_value()) {
+        [[nodiscard]] constexpr auto or_else(Func && func) const
+        {
+            if(has_value())
+            {
                 return *this;
-            } else {
+            }
+            else
+            {
                 return std::invoke(std::forward<Func>(func), error());
             }
         }
 
-        // Inside ExpectedExt<T, E>
         template<typename Func>
-        [[nodiscard]] constexpr auto map(Func&& func) const {
-            using U = std::invoke_result_t<Func, const T&>;
+        [[nodiscard]] constexpr auto map(Func && func) const
+        {
+            using U = std::remove_cvref_t<std::invoke_result_t<Func, const T &>>;
 
-            if (has_value()) {
+            if(has_value())
+            {
                 return ExpectedExt<U, E>(std::invoke(std::forward<Func>(func), value()));
-            } else {
+            }
+            else
+            {
                 return ExpectedExt<U, E>(Unexpected<E>(error()));
             }
         }
 
         template<typename Func>
-        [[nodiscard]] constexpr auto map_error(Func&& func) const {
-            using E2 = std::invoke_result_t<Func, const E&>;
+        [[nodiscard]] constexpr auto map_error(Func && func) const
+        {
+            using E2 = std::remove_cvref_t<std::invoke_result_t<Func, const E &>>;
 
-            if (has_value()) {
+            if(has_value())
+            {
                 return ExpectedExt<T, E2>(value());
-            } else {
+            }
+            else
+            {
                 return ExpectedExt<T, E2>(Unexpected<E2>(std::invoke(std::forward<Func>(func), error())));
             }
         }
@@ -141,12 +190,14 @@ namespace lbnl {
     // Convenience constructors
     //
     template<typename T, typename E>
-    [[nodiscard]] constexpr ExpectedExt<T, E> make_expected(T value) {
+    [[nodiscard]] constexpr ExpectedExt<T, E> make_expected(T value)
+    {
         return ExpectedExt<T, E>(std::move(value));
     }
 
     template<typename T, typename E>
-    [[nodiscard]] constexpr ExpectedExt<T, E> make_unexpected(E error) {
+    [[nodiscard]] constexpr ExpectedExt<T, E> make_unexpected(E error)
+    {
         return ExpectedExt<T, E>(Unexpected<E>(std::move(error)));
     }
 
@@ -154,8 +205,9 @@ namespace lbnl {
     // Pipe operator (|) for ExpectedExt
     //
     template<typename T, typename E, typename Func>
-    [[nodiscard]] constexpr auto operator|(const ExpectedExt<T, E>& exp, Func&& func) {
+    [[nodiscard]] constexpr auto operator|(const ExpectedExt<T, E> & exp, Func && func)
+    {
         return exp.and_then(std::forward<Func>(func));
     }
 
-} // namespace lbnl
+}   // namespace lbnl
