@@ -350,6 +350,8 @@ int main() {
 }
 ```
 
+**Note:** For integer types, this performs integer division which truncates the result. For example, the average of `{1, 2}` returns `1`, not `1.5`. Use floating-point types if precise averaging is required.
+
 ---
 
 ## See Also

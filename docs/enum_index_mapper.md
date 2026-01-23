@@ -12,12 +12,36 @@ The `enum_index_mapper.hxx` header provides `EnumIndexMapper<E, N>`, a class for
 
 | Component | Description |
 |-----------|-------------|
+| `Enum` concept | Constrains template parameter to enum types |
 | `EnumIndexMapper<E, N>` | Bidirectional mapper class |
 | `to_enum` | Convert index to enum (returns optional) |
 | `to_index` | Convert enum to index (returns optional) |
 | `to_enum_or` | Convert with fallback enum value |
 | `to_index_or` | Convert with fallback index |
+| `data` | Access the underlying mapping array |
 | `make_enum_index_mapper` | Helper to create mapper |
+
+---
+
+## Enum Concept
+
+The library defines a concept that restricts the mapper to enum types only:
+
+```cpp
+template<class E>
+concept Enum = std::is_enum_v<E>;
+```
+
+---
+
+## Type Aliases
+
+The `EnumIndexMapper` class exposes these type aliases:
+
+```cpp
+using pair_type = std::pair<int, E>;
+using storage_t = std::array<pair_type, N>;
+```
 
 ---
 
@@ -98,6 +122,47 @@ auto status = mapper.to_enum_or(99, Status::Pending);
 int index = mapper.to_index_or(Status::Active, -1);
 // index == 1
 ```
+
+---
+
+## data
+
+Returns a const reference to the underlying storage array for iteration or testing.
+
+```cpp
+[[nodiscard]] constexpr storage_t const & data() const;
+```
+
+### Example
+
+```cpp
+auto mapper = lbnl::make_enum_index_mapper<Status>({
+    {0, Status::Pending},
+    {1, Status::Active}
+});
+
+for (const auto& [index, value] : mapper.data()) {
+    std::cout << "Index " << index << " maps to enum\n";
+}
+```
+
+---
+
+## make_enum_index_mapper
+
+Two overloads are provided for creating mappers:
+
+```cpp
+// From std::array
+template<Enum E, std::size_t N>
+constexpr auto make_enum_index_mapper(const std::array<std::pair<int, E>, N> & a);
+
+// From brace-initialized list (recommended)
+template<Enum E, std::size_t N>
+constexpr auto make_enum_index_mapper(const std::pair<int, E> (&a)[N]);
+```
+
+The second overload allows simple brace initialization without explicitly constructing a `std::array`.
 
 ---
 

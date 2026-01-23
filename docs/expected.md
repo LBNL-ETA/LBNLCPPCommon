@@ -13,9 +13,45 @@ The `expected.hxx` header provides `ExpectedExt<T, E>`, a result type that can h
 | Component | Description |
 |-----------|-------------|
 | `ExpectedExt<T, E>` | Result type holding value or error |
+| `Unexpected<E>` | Wrapper to disambiguate error values from success values |
 | `make_expected<T, E>()` | Create a success result |
 | `make_unexpected<T, E>()` | Create an error result |
 | `operator\|` | Pipe operator for chaining |
+
+---
+
+## Unexpected Wrapper
+
+`Unexpected<E>` is a wrapper struct that explicitly marks a value as an error. This is particularly useful when `T` and `E` are the same type (e.g., both are `std::string`), as it disambiguates whether the value is a success or an error.
+
+```cpp
+template<typename E>
+struct Unexpected {
+    E error;
+    constexpr explicit Unexpected(E e);
+};
+
+// Deduction guide allows: Unexpected(myError) without specifying template
+template<typename E>
+Unexpected(E) -> Unexpected<E>;
+```
+
+### Example
+
+```cpp
+#include <lbnl/expected.hxx>
+#include <string>
+
+// When T and E are both std::string, use Unexpected to clarify intent
+using Result = lbnl::ExpectedExt<std::string, std::string>;
+
+Result get_greeting(bool success) {
+    if (success) {
+        return Result("Hello!");  // This is the success value
+    }
+    return lbnl::Unexpected(std::string("Failed to generate greeting"));  // This is the error
+}
+```
 
 ---
 

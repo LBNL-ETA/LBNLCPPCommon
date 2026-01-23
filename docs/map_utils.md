@@ -26,10 +26,10 @@ The library defines a concept that constrains functions to work only with map-li
 ```cpp
 template<typename Map>
 concept AssociativeContainer =
-    requires(Map m, typename Map::key_type key, typename Map::mapped_type value) {
-        { m.find(key) } -> std::same_as<typename Map::iterator>;
-        { m.begin() } -> std::same_as<typename Map::iterator>;
-        { m.end() } -> std::same_as<typename Map::iterator>;
+    requires(const Map m, typename Map::key_type key) {
+        { m.find(key) } -> std::same_as<typename Map::const_iterator>;
+        { m.begin() } -> std::same_as<typename Map::const_iterator>;
+        { m.end() } -> std::same_as<typename Map::const_iterator>;
     };
 ```
 
