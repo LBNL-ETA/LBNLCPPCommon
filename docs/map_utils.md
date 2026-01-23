@@ -260,10 +260,13 @@ int main() {
 
 ```cpp
 #include <lbnl/map_utils.hxx>
-#include <lbnl/optional_pipe_import.hxx>
+#include <lbnl/optional.hxx>
 #include <map>
 #include <string>
 #include <iostream>
+
+// Import pipe operators for optional chaining
+using lbnl::operator||;
 
 class Config {
 public:

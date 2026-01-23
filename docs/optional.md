@@ -7,8 +7,9 @@ The `optional.hxx` header provides `OptionalExt<T>`, an extension to `std::optio
 ```cpp
 #include <lbnl/optional.hxx>
 
-// Or import pipe operators into global namespace:
-#include <lbnl/optional_pipe_import.hxx>
+// To use pipe operators, import them into your scope:
+using lbnl::operator|;
+using lbnl::operator||;
 ```
 
 ## Overview
@@ -227,8 +228,12 @@ template<typename T, typename Func>
 ### Example
 
 ```cpp
-#include <lbnl/optional_pipe_import.hxx>  // Imports | and || operators
+#include <lbnl/optional.hxx>
 #include <string>
+
+// Import pipe operators into scope
+using lbnl::operator|;
+using lbnl::operator||;
 
 std::optional<int> parse(const std::string& s) {
     try { return std::stoi(s); }
@@ -288,9 +293,13 @@ int main() {
 ## Complete Example: Chaining Operations
 
 ```cpp
-#include <lbnl/optional_pipe_import.hxx>
+#include <lbnl/optional.hxx>
 #include <fstream>
 #include <string>
+
+// Import pipe operators
+using lbnl::operator|;
+using lbnl::operator||;
 
 std::optional<std::string> read_file(const std::string& path) {
     std::ifstream file(path);
