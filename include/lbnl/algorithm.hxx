@@ -76,7 +76,8 @@ namespace lbnl
 
         if constexpr(std::ranges::sized_range<R1> && std::ranges::sized_range<R2>)
         {
-            result.reserve(std::min(std::ranges::size(r1), std::ranges::size(r2)));
+            // Parentheses around std::min prevent Windows min/max macro expansion
+            result.reserve((std::min)(std::ranges::size(r1), std::ranges::size(r2)));
         }
 
         auto it1 = std::ranges::begin(r1);
