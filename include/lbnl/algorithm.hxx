@@ -62,10 +62,10 @@ namespace lbnl
     }
 
     //! Combines two containers into a single container of pairs.
-    //! \tparam Container1 The type of the first container.
-    //! \tparam Container2 The type of the second container.
-    //! \param c1 The first container.
-    //! \param c2 The second container.
+    //! \tparam R1 The type of the first container.
+    //! \tparam R2 The type of the second container.
+    //! \param r1 The first container.
+    //! \param r2 The second container.
     //! \return A vector of pairs, where each pair contains one element from each container.
     template<std::ranges::input_range R1, std::ranges::input_range R2>
     [[nodiscard]] auto zip(R1 && r1, R2 && r2)
