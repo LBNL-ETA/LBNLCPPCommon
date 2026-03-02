@@ -60,16 +60,16 @@ namespace lbnl
         ~ExpectedExt() = default;
 
         // Construct from value (implicit)
-        constexpr ExpectedExt(T value) : m_data(std::in_place_index<0>, std::move(value)), m_HasValue(true)
+        constexpr ExpectedExt(T val) : m_data(ValueBox{std::move(val)})
         {}
 
         // Construct from Unexpected wrapper (implicit) - disambiguates errors
-        constexpr ExpectedExt(Unexpected<E> err) : m_data(std::in_place_index<1>, std::move(err.error)), m_HasValue(false)
+        constexpr ExpectedExt(Unexpected<E> err) : m_data(ErrorBox{std::move(err.error)})
         {}
 
         [[nodiscard]] constexpr bool has_value() const noexcept
         {
-            return m_HasValue;
+            return std::holds_alternative<ValueBox>(m_data);
         }
 
         [[nodiscard]] constexpr explicit operator bool() const noexcept
@@ -79,22 +79,22 @@ namespace lbnl
 
         [[nodiscard]] constexpr const T & value() const
         {
-            return std::get<0>(m_data);
+            return std::get<ValueBox>(m_data).data;
         }
 
         [[nodiscard]] constexpr T & value()
         {
-            return std::get<0>(m_data);
+            return std::get<ValueBox>(m_data).data;
         }
 
         [[nodiscard]] constexpr const E & error() const
         {
-            return std::get<1>(m_data);
+            return std::get<ErrorBox>(m_data).data;
         }
 
         [[nodiscard]] constexpr E & error()
         {
-            return std::get<1>(m_data);
+            return std::get<ErrorBox>(m_data).data;
         }
 
         //! Returns the contained value or the provided alternative
@@ -171,8 +171,15 @@ namespace lbnl
         }
 
     private:
-        std::variant<T, E> m_data;
-        bool m_HasValue;
+        struct ValueBox
+        {
+            T data;
+        };
+        struct ErrorBox
+        {
+            E data;
+        };
+        std::variant<ValueBox, ErrorBox> m_data;
     };
 
     //
