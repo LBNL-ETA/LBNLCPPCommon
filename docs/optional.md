@@ -6,9 +6,6 @@ The `optional.hxx` header provides `OptionalExt<T>`, an extension to `std::optio
 
 ```cpp
 #include <lbnl/optional.hxx>
-
-// Or import pipe operators into global namespace:
-#include <lbnl/optional_pipe_import.hxx>
 ```
 
 ## Overview
@@ -17,8 +14,6 @@ The `optional.hxx` header provides `OptionalExt<T>`, an extension to `std::optio
 |-----------|-------------|
 | `OptionalExt<T>` | Extended optional class with monadic operations |
 | `extend()` | Convert `std::optional<T>` to `OptionalExt<T>` |
-| `operator\|` | Pipe operator for `and_then` chaining |
-| `operator\|\|` | Pipe operator for fallback values |
 | `get_if_opt()` | Extract type from variant as optional |
 
 ---
@@ -123,14 +118,14 @@ int main() {
 
 ## map / transform
 
-Transforms the contained value if present. Unlike `and_then`, the function returns a plain value (not an optional).
+Transforms the contained value if present. Unlike `and_then`, the function returns a plain value (not an optional). `transform` is the C++23-aligned name; `map` is an alias.
 
 ```cpp
 template<typename Func>
 constexpr auto map(Func && func) const;
 
 template<typename Func>
-constexpr auto transform(Func && func) const;  // Alias for map
+constexpr auto transform(Func && func) const;  // C++23-aligned alias
 ```
 
 ### Example
@@ -143,7 +138,7 @@ int main() {
     std::optional<int> value = 42;
 
     auto doubled = lbnl::extend(value)
-        .map([](int x) { return x * 2; })
+        .transform([](int x) { return x * 2; })
         .raw();  // doubled = 84
 
     auto asString = lbnl::extend(value)
@@ -202,57 +197,6 @@ int main() {
 
 ---
 
-## Pipe Operators
-
-The library provides pipe operators for more concise syntax.
-
-### operator| (and_then)
-
-Chains operations on optional values. The function should return `std::optional<U>` or a plain value.
-
-```cpp
-template<typename T, typename Func>
-[[nodiscard]] constexpr auto operator|(const std::optional<T> & opt, Func && func);
-```
-
-### operator|| (or_else / fallback)
-
-Provides a fallback value when the optional is empty.
-
-```cpp
-template<typename T, typename Func>
-[[nodiscard]] constexpr T operator||(const std::optional<T> & opt, Func && func);
-```
-
-### Example
-
-```cpp
-#include <lbnl/optional_pipe_import.hxx>
-#include <string>
-
-std::optional<int> parse(const std::string& s) {
-    try { return std::stoi(s); }
-    catch (...) { return std::nullopt; }
-}
-
-int main() {
-    std::optional<std::string> input = "42";
-
-    // Chain with |
-    auto result = input
-        | [](const std::string& s) { return parse(s); }
-        | [](int x) { return x * 2; };
-    // result = std::optional<int>(84)
-
-    // Fallback with ||
-    std::optional<int> empty = std::nullopt;
-    int value = empty || []() { return -1; };
-    // value = -1
-}
-```
-
----
-
 ## Variant Helper: get_if_opt
 
 Extracts a specific type from a `std::variant` as an optional.
@@ -288,7 +232,7 @@ int main() {
 ## Complete Example: Chaining Operations
 
 ```cpp
-#include <lbnl/optional_pipe_import.hxx>
+#include <lbnl/optional.hxx>
 #include <fstream>
 #include <string>
 
@@ -299,7 +243,6 @@ std::optional<std::string> read_file(const std::string& path) {
 }
 
 std::optional<int> parse_config_value(const std::string& content) {
-    // Simplified: find "value=" and parse the number after it
     auto pos = content.find("value=");
     if (pos == std::string::npos) return std::nullopt;
     try {
@@ -312,10 +255,10 @@ std::optional<int> parse_config_value(const std::string& content) {
 int main() {
     std::optional<std::string> configPath = "config.txt";
 
-    int configValue = configPath
-        | [](const std::string& path) { return read_file(path); }
-        | [](const std::string& content) { return parse_config_value(content); }
-        || []() { return 100; };  // Default value if anything fails
+    int configValue = lbnl::extend(configPath)
+        .and_then([](const std::string& path) { return read_file(path); })
+        .and_then([](const std::string& content) { return parse_config_value(content); })
+        .value_or(100);  // Default value if anything fails
 
     std::cout << "Config value: " << configValue << '\n';
 }

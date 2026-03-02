@@ -1,6 +1,6 @@
 # ExpectedExt - Result Type for Error Handling
 
-The `expected.hxx` header provides `ExpectedExt<T, E>`, a result type that can hold either a success value (`T`) or an error (`E`). This is similar to C++23's `std::expected` and provides a way to handle errors without exceptions.
+The `expected.hxx` header provides `ExpectedExt<T, E>`, a result type that can hold either a success value (`T`) or an error (`E`). This is designed to match C++23's `std::expected` API so that migration is straightforward.
 
 ## Header
 
@@ -16,7 +16,6 @@ The `expected.hxx` header provides `ExpectedExt<T, E>`, a result type that can h
 | `Unexpected<E>` | Wrapper to disambiguate error values from success values |
 | `make_expected<T, E>()` | Create a success result |
 | `make_unexpected<T, E>()` | Create an error result |
-| `operator\|` | Pipe operator for chaining |
 
 ---
 
@@ -75,8 +74,8 @@ using error_type = E;
 // Success value
 lbnl::ExpectedExt<int, std::string> success(42);
 
-// Error value
-lbnl::ExpectedExt<int, std::string> failure(std::string("Something went wrong"));
+// Error value using Unexpected wrapper
+lbnl::ExpectedExt<int, std::string> failure(lbnl::Unexpected(std::string("Something went wrong")));
 
 // Using helper functions
 auto ok = lbnl::make_expected<int, std::string>(42);
@@ -119,7 +118,7 @@ int main() {
 
 ### value
 
-Returns the contained value. Throws if the result is an error.
+Returns the contained value. Behavior is undefined if the result is an error.
 
 ```cpp
 [[nodiscard]] constexpr const T & value() const;
@@ -128,7 +127,7 @@ Returns the contained value. Throws if the result is an error.
 
 ### error
 
-Returns the contained error. Throws if the result is a value.
+Returns the contained error. Behavior is undefined if the result is a value.
 
 ```cpp
 [[nodiscard]] constexpr const E & error() const;
@@ -151,7 +150,7 @@ template<typename U>
 
 int main() {
     lbnl::ExpectedExt<int, std::string> success(42);
-    lbnl::ExpectedExt<int, std::string> failure(std::string("Error"));
+    auto failure = lbnl::make_unexpected<int, std::string>("Error");
 
     int val1 = success.value();        // 42
     std::string err = failure.error(); // "Error"
@@ -165,7 +164,10 @@ int main() {
 
 ## and_then
 
-Chains an operation if the result is a success. The function can return either another `ExpectedExt<U, E>` or a plain value `U`.
+Chains an operation on success. The function **must** return `ExpectedExt<U, E>`.
+For plain-value transforms, use `transform()` instead.
+
+This matches C++23 `std::expected::and_then` semantics.
 
 ```cpp
 template<typename Func>
@@ -180,18 +182,14 @@ template<typename Func>
 
 using Result = lbnl::ExpectedExt<int, std::string>;
 
-Result safe_divide(int a, int b) {
-    if (b == 0) {
-        return Result(std::string("Division by zero"));
-    }
-    return Result(a / b);
+Result safe_divide(int num, int den) {
+    if (den == 0) return lbnl::Unexpected(std::string("Division by zero"));
+    return num / den;
 }
 
 Result safe_sqrt(int x) {
-    if (x < 0) {
-        return Result(std::string("Cannot take sqrt of negative"));
-    }
-    return Result(static_cast<int>(std::sqrt(x)));
+    if (x < 0) return lbnl::Unexpected(std::string("Cannot take sqrt of negative"));
+    return static_cast<int>(std::sqrt(x));
 }
 
 int main() {
@@ -202,7 +200,7 @@ int main() {
         .and_then([](int x) { return safe_divide(x, 2); })   // 20 / 2 = 10
         .and_then([](int x) { return safe_sqrt(x); });       // sqrt(10) = 3
 
-    if (result) {
+    if (result.has_value()) {
         std::cout << "Result: " << result.value() << '\n';  // 3
     }
 }
@@ -228,7 +226,7 @@ template<typename Func>
 using Result = lbnl::ExpectedExt<int, std::string>;
 
 int main() {
-    Result failure(std::string("Initial error"));
+    auto failure = lbnl::make_unexpected<int, std::string>("Initial error");
 
     auto recovered = failure.or_else([](const std::string& err) {
         std::cout << "Handling error: " << err << '\n';
@@ -241,13 +239,14 @@ int main() {
 
 ---
 
-## map
+## transform
 
-Transforms the success value. Unlike `and_then`, the function returns a plain value (not an `ExpectedExt`).
+Transforms the success value. The function returns a plain value (not an `ExpectedExt`).
+Matches C++23 `std::expected::transform`.
 
 ```cpp
 template<typename Func>
-[[nodiscard]] constexpr auto map(Func && func) const;
+[[nodiscard]] constexpr auto transform(Func && func) const;
 ```
 
 ### Example
@@ -259,23 +258,24 @@ template<typename Func>
 int main() {
     lbnl::ExpectedExt<int, std::string> result(42);
 
-    auto doubled = result.map([](int x) { return x * 2; });
+    auto doubled = result.transform([](int x) { return x * 2; });
     // doubled = ExpectedExt<int, std::string>(84)
 
-    auto asString = result.map([](int x) { return std::to_string(x); });
+    auto asString = result.transform([](int x) { return std::to_string(x); });
     // asString = ExpectedExt<std::string, std::string>("42")
 }
 ```
 
 ---
 
-## map_error
+## transform_error
 
 Transforms the error value while preserving the success value.
+Matches C++23 `std::expected::transform_error`.
 
 ```cpp
 template<typename Func>
-[[nodiscard]] constexpr auto map_error(Func && func) const;
+[[nodiscard]] constexpr auto transform_error(Func && func) const;
 ```
 
 ### Example
@@ -290,54 +290,17 @@ struct DetailedError {
 };
 
 int main() {
-    lbnl::ExpectedExt<int, std::string> failure(std::string("Not found"));
+    auto failure = lbnl::make_unexpected<int, std::string>("Not found");
 
-    auto withCode = failure.map_error([](const std::string& msg) {
+    auto withCode = failure.transform_error([](const std::string& msg) {
         return DetailedError{msg, 404};
     });
     // withCode = ExpectedExt<int, DetailedError>
 
-    if (!withCode) {
+    if (!withCode.has_value()) {
         std::cout << "Error: " << withCode.error().message
                   << " (code " << withCode.error().code << ")\n";
     }
-}
-```
-
----
-
-## Pipe Operator
-
-The `operator|` provides a convenient syntax for chaining `and_then` operations.
-
-```cpp
-template<typename T, typename E, typename Func>
-[[nodiscard]] constexpr auto operator|(const ExpectedExt<T, E> & exp, Func && func);
-```
-
-### Example
-
-```cpp
-#include <lbnl/expected.hxx>
-#include <string>
-
-using Result = lbnl::ExpectedExt<int, std::string>;
-
-Result parse_int(const std::string& s) {
-    try {
-        return Result(std::stoi(s));
-    } catch (...) {
-        return Result(std::string("Parse error"));
-    }
-}
-
-int main() {
-    Result input(42);
-
-    auto result = input
-        | [](int x) { return x * 2; }
-        | [](int x) { return std::to_string(x); };
-    // result = ExpectedExt<std::string, std::string>("84")
 }
 ```
 
@@ -357,35 +320,35 @@ using ParseResult = lbnl::ExpectedExt<int, std::string>;
 FileResult read_file(const std::string& path) {
     std::ifstream file(path);
     if (!file) {
-        return FileResult(std::string("Failed to open file: " + path));
+        return lbnl::Unexpected(std::string("Failed to open file: " + path));
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
-    return FileResult(buffer.str());
+    return buffer.str();
 }
 
 ParseResult parse_number(const std::string& content) {
     try {
-        return ParseResult(std::stoi(content));
-    } catch (const std::exception& e) {
-        return ParseResult(std::string("Parse error: ") + e.what());
+        return std::stoi(content);
+    } catch (const std::exception& exc) {
+        return lbnl::Unexpected(std::string("Parse error: ") + exc.what());
     }
 }
 
 ParseResult validate_positive(int value) {
     if (value <= 0) {
-        return ParseResult(std::string("Value must be positive"));
+        return lbnl::Unexpected(std::string("Value must be positive"));
     }
-    return ParseResult(value);
+    return value;
 }
 
 int main() {
     auto result = read_file("input.txt")
         .and_then([](const std::string& content) { return parse_number(content); })
         .and_then([](int value) { return validate_positive(value); })
-        .map([](int value) { return value * 2; });
+        .transform([](int value) { return value * 2; });
 
-    if (result) {
+    if (result.has_value()) {
         std::cout << "Processed value: " << result.value() << '\n';
     } else {
         std::cout << "Error: " << result.error() << '\n';
@@ -398,14 +361,21 @@ int main() {
 
 ---
 
-## Comparison with Exceptions
+## C++23 Migration Guide
 
-| Aspect | ExpectedExt | Exceptions |
-|--------|-------------|------------|
-| Error visibility | Explicit in return type | Hidden in call stack |
-| Performance | No stack unwinding | May have overhead |
-| Composability | Easy to chain | Try-catch blocks |
-| Forgetting to handle | Compile-time visible | Runtime surprise |
+When migrating to C++23's `std::expected`, the API maps directly:
+
+| LBNLCPPCommon | C++23 `std::expected` |
+|---------------|----------------------|
+| `ExpectedExt<T, E>` | `std::expected<T, E>` |
+| `Unexpected<E>` | `std::unexpected<E>` |
+| `and_then` | `and_then` |
+| `or_else` | `or_else` |
+| `transform` | `transform` |
+| `transform_error` | `transform_error` |
+| `has_value` | `has_value` |
+| `value` / `error` | `value` / `error` |
+| `value_or` | `value_or` |
 
 ---
 

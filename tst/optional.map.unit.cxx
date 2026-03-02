@@ -3,10 +3,10 @@
 #include <optional>
 #include <string>
 
-TEST(OptionalExtMapTest, Map_TransformsValue)
+TEST(OptionalExtTransformTest, Transform_TransformsValue)
 {
     std::optional<int> opt = 10;
-    auto result = lbnl::extend(opt).map([](int x) {
+    auto result = lbnl::extend(opt).transform([](int x) {
         return std::to_string(x);
     });
 
@@ -14,17 +14,17 @@ TEST(OptionalExtMapTest, Map_TransformsValue)
     EXPECT_EQ(result.raw().value(), "10");
 }
 
-TEST(OptionalExtMapTest, Map_SkipsOnEmpty)
+TEST(OptionalExtTransformTest, Transform_SkipsOnEmpty)
 {
     std::optional<int> opt;
-    auto result = lbnl::extend(opt).map([](int x) {
+    auto result = lbnl::extend(opt).transform([](int x) {
         return x * 2;
     });
 
     EXPECT_FALSE(result.raw().has_value());
 }
 
-TEST(OptionalExtMapTest, Transform_EqualsMap)
+TEST(OptionalExtTransformTest, MapAliasEqualsTransform)
 {
     std::optional<int> opt = 5;
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(LBNLCPPCommon LANGUAGES CXX)
+project(LBNLCPPCommon VERSION 0.15.0 LANGUAGES CXX)
 
 if (MSVC)
     add_compile_options("/FC")  # Show full paths when compiling

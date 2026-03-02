@@ -110,7 +110,7 @@ Result safe_divide(int num, int den) {
 
 auto result = safe_divide(10, 2)
     .and_then([](int x) { return safe_divide(x, 2); })
-    .map([](int x) { return x * 10; });
+    .transform([](int x) { return x * 10; });
 
 if (result.has_value()) {
     std::cout << result.value() << '\n';  // 25
@@ -177,10 +177,10 @@ Result type for error handling without exceptions.
 | `value` | Get success value |
 | `error` | Get error value |
 | `value_or` | Get value or fallback |
-| `and_then` | Chain on success |
+| `and_then` | Chain on success (func returns `ExpectedExt`) |
 | `or_else` | Handle errors |
-| `map` | Transform success value |
-| `map_error` | Transform error value |
+| `transform` | Transform success value (func returns plain value) |
+| `transform_error` | Transform error value |
 
 ### Map Utilities ([docs/map_utils.md](docs/map_utils.md))
 

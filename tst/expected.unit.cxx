@@ -62,20 +62,20 @@ TEST(ExpectedExtTest, OrElse_SkippedOnSuccess)
     EXPECT_EQ(res.value(), 10);
 }
 
-// Test and_then with plain value return
-TEST(ExpectedExtTest, AndThen_PlainValue)
+// Test transform with plain value return
+TEST(ExpectedExtTest, Transform_PlainValue)
 {
-    auto res = lbnl::make_expected<int, std::string>(4).and_then([](int x) { return x * x; });
+    auto res = lbnl::make_expected<int, std::string>(4).transform([](int x) { return x * x; });
 
     ASSERT_TRUE(res.has_value());
     EXPECT_EQ(res.value(), 16);
 }
 
-// Test and_then is skipped on error
-TEST(ExpectedExtTest, AndThen_SkipOnError)
+// Test transform is skipped on error
+TEST(ExpectedExtTest, Transform_SkipOnError)
 {
-    auto res = lbnl::make_unexpected<int, std::string>("fail").and_then([](int x) {
-        ADD_FAILURE() << "and_then should not be called";
+    auto res = lbnl::make_unexpected<int, std::string>("fail").transform([](int x) {
+        ADD_FAILURE() << "transform should not be called";
         return x + 1;
     });
 
@@ -132,18 +132,18 @@ TEST(ExpectedExtSameType, ValueOr)
     EXPECT_EQ(err.value_or("fallback"), "fallback");
 }
 
-TEST(ExpectedExtSameType, AndThen_WithValue)
+TEST(ExpectedExtSameType, Transform_WithValue)
 {
     auto res = lbnl::make_expected<std::string, std::string>("input")
-                 .and_then([](const std::string & str) { return str + "_modified"; });
+                 .transform([](const std::string & str) { return str + "_modified"; });
     ASSERT_TRUE(res.has_value());
     EXPECT_EQ(res.value(), "input_modified");
 }
 
-TEST(ExpectedExtSameType, AndThen_WithError)
+TEST(ExpectedExtSameType, Transform_WithError)
 {
     auto res = lbnl::make_unexpected<std::string, std::string>("err")
-                 .and_then([](const std::string & str) { return str + "_modified"; });
+                 .transform([](const std::string & str) { return str + "_modified"; });
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), "err");
 }
@@ -169,52 +169,52 @@ TEST(ExpectedExtSameType, OrElse_SkippedOnSuccess)
     EXPECT_EQ(res.value(), "good");
 }
 
-TEST(ExpectedExtSameType, Map_WithValue)
+TEST(ExpectedExtSameType, Transform_Value_Mapped)
 {
     auto res = lbnl::make_expected<std::string, std::string>("data")
-                 .map([](const std::string & str) { return str + "_mapped"; });
+                 .transform([](const std::string & str) { return str + "_transformed"; });
     ASSERT_TRUE(res.has_value());
-    EXPECT_EQ(res.value(), "data_mapped");
+    EXPECT_EQ(res.value(), "data_transformed");
 }
 
-TEST(ExpectedExtSameType, Map_WithError)
+TEST(ExpectedExtSameType, Transform_Error_Skipped)
 {
     auto res = lbnl::make_unexpected<std::string, std::string>("err")
-                 .map([](const std::string & str) { return str + "_mapped"; });
+                 .transform([](const std::string & str) { return str + "_transformed"; });
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), "err");
 }
 
-TEST(ExpectedExtSameType, MapError_WithError)
+TEST(ExpectedExtSameType, TransformError_WithError)
 {
     auto res = lbnl::make_unexpected<std::string, std::string>("err")
-                 .map_error([](const std::string & err) { return "wrapped_" + err; });
+                 .transform_error([](const std::string & err) { return "wrapped_" + err; });
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), "wrapped_err");
 }
 
-TEST(ExpectedExtSameType, MapError_WithValue)
+TEST(ExpectedExtSameType, TransformError_WithValue)
 {
     auto res = lbnl::make_expected<std::string, std::string>("val")
-                 .map_error([](const std::string & err) { return "wrapped_" + err; });
+                 .transform_error([](const std::string & err) { return "wrapped_" + err; });
     ASSERT_TRUE(res.has_value());
     EXPECT_EQ(res.value(), "val");
 }
 
-TEST(ExpectedExtSameType, AndThen_Chained)
+TEST(ExpectedExtSameType, Transform_Chained)
 {
     auto res = lbnl::make_expected<std::string, std::string>("start")
-                 .and_then([](const std::string & str) { return str + "_first"; })
-                 .and_then([](const std::string & str) { return str + "_second"; });
+                 .transform([](const std::string & str) { return str + "_first"; })
+                 .transform([](const std::string & str) { return str + "_second"; });
     ASSERT_TRUE(res.has_value());
     EXPECT_EQ(res.value(), "start_first_second");
 }
 
-TEST(ExpectedExtSameType, AndThen_Chained_Error)
+TEST(ExpectedExtSameType, Transform_Chained_Error)
 {
     auto res = lbnl::make_unexpected<std::string, std::string>("fail")
-                 .and_then([](const std::string & str) { return str + "_first"; })
-                 .and_then([](const std::string & str) { return str + "_second"; });
+                 .transform([](const std::string & str) { return str + "_first"; })
+                 .transform([](const std::string & str) { return str + "_second"; });
     ASSERT_FALSE(res.has_value());
     EXPECT_EQ(res.error(), "fail");
 }

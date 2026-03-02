@@ -14,7 +14,7 @@ The `algorithm.hxx` header provides generic container and range algorithms that 
 |----------|-------------|
 | `find_element` | Find first element matching a predicate |
 | `contains` | Check if container contains a value |
-| `unique` | Remove duplicate elements |
+| `sorted_unique` | Remove duplicate elements (sorts first) |
 | `zip` | Combine two ranges into pairs |
 | `filter` | Filter elements by predicate |
 | `transform_if` | Transform matching elements, copy others |
@@ -110,13 +110,13 @@ int main() {
 
 ---
 
-## unique
+## sorted_unique
 
 Removes duplicate elements from a range, returning a new sorted container.
 
 ```cpp
 template<std::ranges::range R>
-[[nodiscard]] constexpr auto unique(const R & range);
+[[nodiscard]] constexpr auto sorted_unique(const R & range);
 ```
 
 ### Parameters
@@ -136,7 +136,7 @@ A new `std::vector` with duplicates removed (sorted).
 int main() {
     std::vector<int> numbers = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
 
-    auto uniqueNumbers = lbnl::unique(numbers);
+    auto uniqueNumbers = lbnl::sorted_unique(numbers);
     // Result: {1, 2, 3, 4, 5, 6, 9}
 }
 ```

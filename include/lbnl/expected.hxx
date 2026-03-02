@@ -104,34 +104,23 @@ namespace lbnl
             return has_value() ? value() : static_cast<T>(std::forward<U>(alt));
         }
 
-        //! Applies a function to the value if present.
-        //! Supports chaining with:
-        //! - another ExpectedExt<U, E>
-        //! - a plain value U
+        //! Chains an operation on success. The function must return ExpectedExt<U, E>.
+        //! For plain-value transforms, use transform() instead (matches C++23 semantics).
         template<typename Func>
         [[nodiscard]] constexpr auto and_then(Func && func) const
         {
             using Raw = std::invoke_result_t<Func, const T &>;
+            static_assert(is_expected_ext<Raw>::value,
+                          "and_then requires a function returning ExpectedExt; "
+                          "use transform() for plain values");
 
-            if constexpr(is_expected_ext<Raw>::value)
+            using U = typename Raw::value_type;
+            using Ret = ExpectedExt<U, E>;
+            if(!has_value())
             {
-                using U = typename Raw::value_type;
-                using Ret = ExpectedExt<U, E>;
-                if(!has_value())
-                {
-                    return Ret(Unexpected<E>(error()));
-                }
-                return std::invoke(std::forward<Func>(func), value());
+                return Ret(Unexpected<E>(error()));
             }
-            else
-            {
-                using Ret = ExpectedExt<Raw, E>;
-                if(!has_value())
-                {
-                    return Ret(Unexpected<E>(error()));
-                }
-                return Ret(std::invoke(std::forward<Func>(func), value()));
-            }
+            return std::invoke(std::forward<Func>(func), value());
         }
 
         //! Fallback handler if there's an error
@@ -148,8 +137,10 @@ namespace lbnl
             }
         }
 
+        //! Transforms the success value. The function returns a plain value (not ExpectedExt).
+        //! Matches C++23 std::expected::transform.
         template<typename Func>
-        [[nodiscard]] constexpr auto map(Func && func) const
+        [[nodiscard]] constexpr auto transform(Func && func) const
         {
             using U = std::remove_cvref_t<std::invoke_result_t<Func, const T &>>;
 
@@ -163,8 +154,9 @@ namespace lbnl
             }
         }
 
+        //! Transforms the error value. Matches C++23 std::expected::transform_error.
         template<typename Func>
-        [[nodiscard]] constexpr auto map_error(Func && func) const
+        [[nodiscard]] constexpr auto transform_error(Func && func) const
         {
             using E2 = std::remove_cvref_t<std::invoke_result_t<Func, const E &>>;
 
