@@ -23,7 +23,6 @@ LBNLCPPCommon/
 │       ├── algorithm.hxx           # Container and range algorithms
 │       ├── optional.hxx            # OptionalExt with monadic operations
 │       ├── optional_utils.hxx      # Optional utility functions
-│       ├── optional_pipe_import.hxx # Pipe operator imports
 │       ├── expected.hxx            # ExpectedExt for error handling
 │       ├── map_utils.hxx           # Associative container utilities
 │       ├── enum_index_mapper.hxx   # Bidirectional enum-index mapping
@@ -86,14 +85,15 @@ if (found) {
 ### Chaining Optional Operations
 
 ```cpp
-#include <lbnl/optional_pipe_import.hxx>
+#include <lbnl/optional.hxx>
 
 std::optional<std::string> input = "42";
 
-int result = input
-    | [](const std::string& s) { return parse_int(s); }  // returns optional<int>
-    | [](int x) { return x * 2; }
-    || []() { return 0; };  // fallback if any step fails
+int result = lbnl::extend(input)
+    .and_then([](const std::string& s) { return parse_int(s); })  // returns optional<int>
+    .and_then([](int x) { return x * 2; })
+    .or_else([]() { return 0; })  // fallback if any step fails
+    .value_or(0);
 ```
 
 ### Error Handling with ExpectedExt
@@ -103,16 +103,16 @@ int result = input
 
 using Result = lbnl::ExpectedExt<int, std::string>;
 
-Result safe_divide(int a, int b) {
-    if (b == 0) return Result(std::string("Division by zero"));
-    return Result(a / b);
+Result safe_divide(int num, int den) {
+    if (den == 0) return lbnl::Unexpected(std::string("Division by zero"));
+    return num / den;
 }
 
 auto result = safe_divide(10, 2)
     .and_then([](int x) { return safe_divide(x, 2); })
     .map([](int x) { return x * 10; });
 
-if (result) {
+if (result.has_value()) {
     std::cout << result.value() << '\n';  // 25
 }
 ```
@@ -128,8 +128,8 @@ lbnl::LazyEvaluator<std::string, std::string> fileCache(
     }
 );
 
-auto content1 = fileCache("config.txt");  // reads file
-auto content2 = fileCache("config.txt");  // returns cached content
+const auto & content1 = fileCache("config.txt");  // reads file
+const auto & content2 = fileCache("config.txt");  // returns cached reference
 ```
 
 ## Library Components
@@ -142,7 +142,7 @@ Generic algorithms for containers and ranges.
 |----------|-------------|
 | `find_element` | Find first element matching a predicate |
 | `contains` | Check if container contains a value |
-| `unique` | Remove duplicates from a range |
+| `sorted_unique` | Remove duplicates from a range (sorts first) |
 | `zip` | Combine two ranges into pairs |
 | `filter` | Filter elements by predicate |
 | `transform_if` | Transform matching elements, copy others |
@@ -164,8 +164,6 @@ Extended optional with C++23-like monadic operations.
 | `or_else` | Provide fallback for empty optional |
 | `map` / `transform` | Transform contained value |
 | `value_or` | Get value or fallback |
-| `operator\|` | Pipe syntax for and_then |
-| `operator\|\|` | Pipe syntax for fallback |
 
 Also includes `average_optional()` for computing averages of optional vectors.
 
@@ -212,8 +210,8 @@ Thread-safe memoization for expensive computations.
 
 | Method | Description |
 |--------|-------------|
-| `operator()` | Get or compute value |
-| `get` | Get or compute value (returns reference) |
+| `operator()` | Get or compute value (returns `const Value &`) |
+| `get` | Get or compute value (returns `const Value &`) |
 
 ## Documentation
 

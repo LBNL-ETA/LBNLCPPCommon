@@ -244,18 +244,6 @@ namespace lbnl
         return OptionalExt<T>(opt);
     }
 
-    template<typename T, typename Func>
-    [[nodiscard]] constexpr auto operator|(const std::optional<T> & opt, Func && func)
-    {
-        return extend(opt).and_then(std::forward<Func>(func)).raw();
-    }
-
-    template<typename T, typename Func>
-    [[nodiscard]] constexpr T operator||(const std::optional<T> & opt, Func && func)
-    {
-        return opt ? *opt : std::invoke(std::forward<Func>(func));
-    }
-
     // Variant helper
     template<typename T, typename Variant>
     constexpr bool is_in_variant_v = false;

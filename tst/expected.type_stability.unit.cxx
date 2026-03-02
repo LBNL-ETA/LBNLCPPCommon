@@ -84,11 +84,11 @@ TEST(ExpectedExt_MapError, MapsError_PreservesValue)
     EXPECT_EQ(r2.value(), 9);
 }
 
-TEST(ExpectedExt_Pipe, ChainsAndThenViaPipe)
+TEST(ExpectedExt_AndThen, ChainsAndThen)
 {
-    auto r = ( lbnl::make_expected<int, std::string>(3)
-               | [](int x){ return x + 1; }                 // plain value → wrap
-               | [](int x){ return lbnl::make_expected<double, std::string>(x * 2.5); } );
+    auto r = lbnl::make_expected<int, std::string>(3)
+               .and_then([](int x) { return x + 1; })
+               .and_then([](int x) { return lbnl::make_expected<double, std::string>(x * 2.5); });
 
     static_assert(std::is_same_v<decltype(r), lbnl::ExpectedExt<double, std::string>>);
     ASSERT_TRUE(r.has_value());

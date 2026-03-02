@@ -83,4 +83,4 @@ UseTab: Never
 
 NamespaceIndentation: 'All'
 
-Standard: Cpp11
+Standard: c++20

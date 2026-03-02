@@ -1,44 +1,45 @@
 #include <gtest/gtest.h>
 
 #include <lbnl/optional.hxx>
-#include <lbnl/optional_pipe_import.hxx>
 
 
-// Test | with a valid optional
-TEST(OptionalTest, OperatorPipe_WithValue)
+// Test and_then with a valid optional
+TEST(OptionalTest, AndThen_WithValue)
 {
     constexpr std::optional opt_value{3};
-    constexpr auto result = opt_value | [](const int x) { return x + 2; };
+    constexpr auto result = lbnl::extend(opt_value).and_then([](const int x) { return x + 2; });
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), 5);
+    EXPECT_EQ(*result, 5);
 }
 
-// Test | with an empty optional
-TEST(OptionalTest, OperatorPipe_Empty)
+// Test and_then with an empty optional
+TEST(OptionalTest, AndThen_Empty)
 {
     constexpr std::optional<int> opt_value;
-    constexpr auto result = opt_value | [](const int x) { return x + 2; };
+    constexpr auto result = lbnl::extend(opt_value).and_then([](const int x) { return x + 2; });
 
     EXPECT_FALSE(result.has_value());
 }
 
-// Test || with a valid optional
-TEST(OptionalTest, OperatorOr_WithValue)
+// Test or_else with a valid optional (should keep original value)
+TEST(OptionalTest, OrElse_WithValue)
 {
     constexpr std::optional opt_value = 7;
-    constexpr auto result = opt_value || [] { return 20; };
+    constexpr auto result = lbnl::extend(opt_value).or_else([] { return 20; });
 
-    EXPECT_EQ(result, 7);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(*result, 7);
 }
 
-// Test operator|| with an empty optional
-TEST(OptionalTest, OperatorOr_Empty)
+// Test or_else with an empty optional (should use fallback)
+TEST(OptionalTest, OrElse_Empty)
 {
     constexpr std::optional<int> opt_value;
-    constexpr auto result = opt_value || [] { return 20; };
+    constexpr auto result = lbnl::extend(opt_value).or_else([] { return 20; });
 
-    EXPECT_EQ(result, 20);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(*result, 20);
 }
 
 // Test value_or with a value present

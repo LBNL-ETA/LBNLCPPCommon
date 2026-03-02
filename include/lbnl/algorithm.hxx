@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 // Do not create the implementation file. This is the header only library
 
@@ -50,7 +51,7 @@ namespace lbnl
     //! \param range The range of elements to process.
     //! \return A new sorted vector with duplicates removed.
     template<std::ranges::range R>
-    [[nodiscard]] constexpr auto unique(const R & range)
+    [[nodiscard]] constexpr auto sorted_unique(const R & range)
     {
         using ValueType = std::ranges::range_value_t<R>;
 
@@ -68,7 +69,7 @@ namespace lbnl
     //! \param r2 The second container.
     //! \return A vector of pairs, where each pair contains one element from each container.
     template<std::ranges::input_range R1, std::ranges::input_range R2>
-    [[nodiscard]] auto zip(R1 && r1, R2 && r2)
+    [[nodiscard]] constexpr auto zip(R1 && r1, R2 && r2)
     {
         using T1 = std::ranges::range_value_t<R1>;
         using T2 = std::ranges::range_value_t<R2>;
@@ -134,7 +135,7 @@ namespace lbnl
     //! \param func The function used to transform selected elements.
     //! \return A vector of transformed elements that passed the predicate.
     template<std::ranges::range R, typename Predicate, typename Func>
-    [[nodiscard]] auto transform_filter(const R & range, Predicate pred, Func func)
+    [[nodiscard]] constexpr auto transform_filter(const R & range, Predicate pred, Func func)
     {
         using ResultType = std::invoke_result_t<Func, std::ranges::range_value_t<R>>;
         std::vector<ResultType> result;
@@ -190,31 +191,8 @@ namespace lbnl
     [[nodiscard]] constexpr auto merge(const R1 & range1, const R2 & range2)
     {
         std::vector<std::ranges::range_value_t<R1>> result;
-        auto it1 = range1.begin();
-        auto it2 = range2.begin();
-        while(it1 != range1.end() && it2 != range2.end())
-        {
-            if(*it1 <= *it2)
-            {
-                result.push_back(*it1);
-                ++it1;
-            }
-            else
-            {
-                result.push_back(*it2);
-                ++it2;
-            }
-        }
-        while(it1 != range1.end())
-        {
-            result.push_back(*it1);
-            ++it1;
-        }
-        while(it2 != range2.end())
-        {
-            result.push_back(*it2);
-            ++it2;
-        }
+        result.reserve(std::ranges::distance(range1) + std::ranges::distance(range2));
+        std::ranges::merge(range1, range2, std::back_inserter(result));
         return result;
     }
 
@@ -281,7 +259,14 @@ namespace lbnl
     template<typename T>
     [[nodiscard]] constexpr std::vector<T> flatten(const std::vector<std::vector<T>> & nested)
     {
+        size_t total = 0;
+        for(const auto & inner : nested)
+        {
+            total += inner.size();
+        }
+
         std::vector<T> result;
+        result.reserve(total);
         for(const auto & inner : nested)
         {
             result.insert(result.end(), inner.begin(), inner.end());

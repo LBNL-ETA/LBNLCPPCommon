@@ -107,15 +107,15 @@ TEST(LazyEvaluatorTest, ParallelAccessSameKey)
     std::vector<std::thread> threads;
     std::vector<std::string> results(numThreads);
 
-    for(int i = 0; i < numThreads; ++i)
+    for(int idx = 0; idx < numThreads; ++idx)
     {
         threads.emplace_back(
-          [&evaluator, &results, i, sharedKey]() { results[i] = evaluator.get(sharedKey); });
+          [&evaluator, &results, idx, sharedKey]() { results[idx] = evaluator.get(sharedKey); });
     }
 
-    for(auto & t : threads)
+    for(auto & thr : threads)
     {
-        t.join();
+        thr.join();
     }
 
     std::set uniqueResults(results.begin(), results.end());
@@ -124,4 +124,54 @@ TEST(LazyEvaluatorTest, ParallelAccessSameKey)
 
     // Only one computation should have occurred
     ASSERT_EQ(computeCount.load(), 1);
+}
+
+TEST(LazyEvaluatorTest, ParallelAccessDifferentKeys)
+{
+    using namespace std::chrono_literals;
+
+    std::atomic computeCount{0};
+    lbnl::LazyEvaluator<int, std::string> evaluator([&](int key) {
+        ++computeCount;
+        std::this_thread::sleep_for(50ms);   // Simulate expensive work
+        return "Value_" + std::to_string(key);
+    });
+
+    constexpr int numKeys = 4;
+    constexpr int threadsPerKey = 3;
+    constexpr int numThreads = numKeys * threadsPerKey;
+
+    std::vector<std::thread> threads;
+    std::vector<std::string> results(numThreads);
+
+    const auto start = std::chrono::steady_clock::now();
+
+    for(int idx = 0; idx < numThreads; ++idx)
+    {
+        const int key = idx % numKeys;
+        threads.emplace_back(
+          [&evaluator, &results, idx, key]() { results[idx] = evaluator.get(key); });
+    }
+
+    for(auto & thr : threads)
+    {
+        thr.join();
+    }
+
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+
+    // Each key should be computed exactly once
+    ASSERT_EQ(computeCount.load(), numKeys);
+
+    // Verify all results are correct
+    for(int idx = 0; idx < numThreads; ++idx)
+    {
+        const int key = idx % numKeys;
+        EXPECT_EQ(results[idx], "Value_" + std::to_string(key));
+    }
+
+    // Different keys should compute concurrently, so total time should be
+    // closer to 50ms than 200ms (4 * 50ms sequential)
+    const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    EXPECT_LT(elapsedMs, 180) << "Different keys should compute concurrently";
 }

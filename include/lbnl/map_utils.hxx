@@ -75,4 +75,4 @@ namespace lbnl
         }
         return values;
     }
-}
+}   // namespace lbnl
