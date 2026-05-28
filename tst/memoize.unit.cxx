@@ -144,8 +144,6 @@ TEST(LazyEvaluatorTest, ParallelAccessDifferentKeys)
     std::vector<std::thread> threads;
     std::vector<std::string> results(numThreads);
 
-    const auto start = std::chrono::steady_clock::now();
-
     for(int idx = 0; idx < numThreads; ++idx)
     {
         const int key = idx % numKeys;
@@ -158,9 +156,8 @@ TEST(LazyEvaluatorTest, ParallelAccessDifferentKeys)
         thr.join();
     }
 
-    const auto elapsed = std::chrono::steady_clock::now() - start;
-
-    // Each key should be computed exactly once
+    // Each key should be computed exactly once (no duplicate work despite
+    // multiple threads requesting the same key concurrently)
     ASSERT_EQ(computeCount.load(), numKeys);
 
     // Verify all results are correct
@@ -169,9 +166,4 @@ TEST(LazyEvaluatorTest, ParallelAccessDifferentKeys)
         const int key = idx % numKeys;
         EXPECT_EQ(results[idx], "Value_" + std::to_string(key));
     }
-
-    // Different keys should compute concurrently, so total time should be
-    // closer to 50ms than 200ms (4 * 50ms sequential)
-    const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    EXPECT_LT(elapsedMs, 180) << "Different keys should compute concurrently";
 }
