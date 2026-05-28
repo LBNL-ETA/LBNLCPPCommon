@@ -1,9 +1,24 @@
 cmake_minimum_required(VERSION 3.14)
-project(LBNLCPPCommon VERSION 0.15.0 LANGUAGES CXX)
+project(LBNLCPPCommon VERSION 0.16.0 LANGUAGES CXX)
 
 if (MSVC)
     add_compile_options("/FC")  # Show full paths when compiling
 endif()
+
+# Graceful local-sibling fallback: the `local` CMake preset sets
+# FETCHCONTENT_SOURCE_DIR_<NAME> to ${sourceDir}/../<DepName> for each declared
+# dependency. If a sibling working copy is missing, unset that variable here so
+# FetchContent falls back to the declared remote instead of erroring out.
+foreach(_lbnl_dep GOOGLETEST)
+    if(DEFINED FETCHCONTENT_SOURCE_DIR_${_lbnl_dep})
+        if(NOT EXISTS "${FETCHCONTENT_SOURCE_DIR_${_lbnl_dep}}/CMakeLists.txt")
+            message(STATUS
+                "Local sibling for ${_lbnl_dep} not found at "
+                "${FETCHCONTENT_SOURCE_DIR_${_lbnl_dep}}; falling back to remote.")
+            unset(FETCHCONTENT_SOURCE_DIR_${_lbnl_dep} CACHE)
+        endif()
+    endif()
+endforeach()
 
 # Create a header-only library
 add_library(LBNLCPPCommon INTERFACE)

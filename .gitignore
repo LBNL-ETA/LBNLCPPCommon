@@ -48,3 +48,9 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Personal CMake presets (per-developer toolchain overrides)
+CMakeUserPresets.json
+
+# CMake build artifacts
+build/
+
