@@ -3,6 +3,7 @@ project(LBNLCPPCommon VERSION 0.16.0 LANGUAGES CXX)
 
 if (MSVC)
     add_compile_options("/FC")  # Show full paths when compiling
+    add_compile_options("/MP")  # Multi-processor (parallel) compilation
 endif()
 
 # Graceful local-sibling fallback: the `local` CMake preset sets
