@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(LBNLCPPCommon VERSION 0.16.0 LANGUAGES CXX)
+project(LBNLCPPCommon VERSION 0.17.0 LANGUAGES CXX)
 
 if (MSVC)
     add_compile_options("/FC")  # Show full paths when compiling
@@ -51,7 +51,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG v1.16.0
+            GIT_TAG v1.17.0
     )
 
     # Force GoogleTest to use the same runtime library as the project
