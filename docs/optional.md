@@ -174,6 +174,56 @@ int main() {
 
 ---
 
+## Element Access
+
+Access the contained value directly, mirroring `std::optional`. Behavior is
+undefined if the optional is empty.
+
+```cpp
+[[nodiscard]] constexpr const T & operator*() const noexcept;
+[[nodiscard]] constexpr T & operator*() noexcept;
+[[nodiscard]] constexpr const T * operator->() const noexcept;
+[[nodiscard]] constexpr T * operator->() noexcept;
+```
+
+---
+
+## Comparisons
+
+Mirrors `std::optional`. An `OptionalExt` can be compared for equality and
+ordering against another `OptionalExt`, against `std::nullopt`, or against a
+bare value. An empty optional compares **less than** any engaged one. C++20
+synthesizes `operator!=`, the relational operators (`<`, `<=`, `>`, `>=`), and
+the reversed forms. The relational operators require `T` to be
+three-way comparable; equality requires `T` to be equality comparable.
+
+```cpp
+friend constexpr bool operator==(const OptionalExt & lhs, const OptionalExt & rhs);
+friend constexpr bool operator==(const OptionalExt & lhs, std::nullopt_t);
+friend constexpr bool operator==(const OptionalExt & lhs, const T & value);
+friend constexpr auto operator<=>(const OptionalExt & lhs, const OptionalExt & rhs);
+friend constexpr std::strong_ordering operator<=>(const OptionalExt & lhs, std::nullopt_t);
+friend constexpr auto operator<=>(const OptionalExt & lhs, const T & value);
+```
+
+### Example
+
+```cpp
+#include <lbnl/optional.hxx>
+
+int main() {
+    auto a = lbnl::extend(std::optional<int>{3});
+    auto b = lbnl::extend(std::optional<int>{});  // empty
+
+    bool e1 = (a == 3);          // true
+    bool e2 = (b == std::nullopt); // true
+    bool e3 = (b < a);           // true  (empty < engaged)
+    bool e4 = (a != b);          // true  (synthesized)
+}
+```
+
+---
+
 ## raw
 
 Returns the underlying `std::optional<T>`.

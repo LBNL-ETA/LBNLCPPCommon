@@ -87,6 +87,28 @@ namespace lbnl
             return std::get<ValueBox>(m_data).data;
         }
 
+        //! Member access on the contained value, matching std::expected.
+        [[nodiscard]] constexpr const T * operator->() const
+        {
+            return &value();
+        }
+
+        [[nodiscard]] constexpr T * operator->()
+        {
+            return &value();
+        }
+
+        //! Dereference to the contained value, matching std::expected.
+        [[nodiscard]] constexpr const T & operator*() const
+        {
+            return value();
+        }
+
+        [[nodiscard]] constexpr T & operator*()
+        {
+            return value();
+        }
+
         [[nodiscard]] constexpr const E & error() const
         {
             return std::get<ErrorBox>(m_data).data;
@@ -168,6 +190,32 @@ namespace lbnl
             {
                 return ExpectedExt<T, E2>(Unexpected<E2>(std::invoke(std::forward<Func>(func), error())));
             }
+        }
+
+        //
+        // Equality, mirroring std::expected. Defined as hidden friends so they are
+        // found by ADL only for ExpectedExt arguments. C++20 synthesizes operator!=
+        // and the reversed forms (value == expected, Unexpected == expected) from
+        // these. std::expected intentionally has NO ordering operators (an
+        // value-or-error has no natural order), so none are provided here.
+        //
+        [[nodiscard]] friend constexpr bool operator==(const ExpectedExt & lhs, const ExpectedExt & rhs)
+        {
+            if(lhs.has_value() != rhs.has_value())
+            {
+                return false;
+            }
+            return lhs.has_value() ? (lhs.value() == rhs.value()) : (lhs.error() == rhs.error());
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(const ExpectedExt & lhs, const T & val)
+        {
+            return lhs.has_value() && lhs.value() == val;
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(const ExpectedExt & lhs, const Unexpected<E> & unex)
+        {
+            return !lhs.has_value() && lhs.error() == unex.error;
         }
 
     private:

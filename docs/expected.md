@@ -125,6 +125,18 @@ Returns the contained value. Behavior is undefined if the result is an error.
 [[nodiscard]] constexpr T & value();
 ```
 
+### operator-> / operator*
+
+Access the contained value directly, mirroring `std::expected`. Behavior is
+undefined if the result is an error.
+
+```cpp
+[[nodiscard]] constexpr const T * operator->() const;
+[[nodiscard]] constexpr T * operator->();
+[[nodiscard]] constexpr const T & operator*() const;
+[[nodiscard]] constexpr T & operator*();
+```
+
 ### error
 
 Returns the contained error. Behavior is undefined if the result is a value.
@@ -301,6 +313,40 @@ int main() {
         std::cout << "Error: " << withCode.error().message
                   << " (code " << withCode.error().code << ")\n";
     }
+}
+```
+
+---
+
+## Equality
+
+Mirrors `std::expected`. An `ExpectedExt` compares equal to another only when
+both hold a value (and the values are equal) or both hold an error (and the
+errors are equal). It can also be compared directly against a bare value or an
+`Unexpected<E>`. C++20 synthesizes `operator!=` and the reversed forms.
+
+`ExpectedExt` intentionally provides **no ordering operators** (`<`, `<=>`),
+matching `std::expected` — a value-or-error has no natural order.
+
+```cpp
+friend constexpr bool operator==(const ExpectedExt & lhs, const ExpectedExt & rhs);
+friend constexpr bool operator==(const ExpectedExt & lhs, const T & value);
+friend constexpr bool operator==(const ExpectedExt & lhs, const Unexpected<E> & error);
+```
+
+### Example
+
+```cpp
+#include <lbnl/expected.hxx>
+
+int main() {
+    auto a = lbnl::make_expected<int, std::string>(5);
+    auto b = lbnl::make_unexpected<int, std::string>("oops");
+
+    bool e1 = (a == 5);                                  // true  (bare value)
+    bool e2 = (a == lbnl::make_expected<int, std::string>(5)); // true
+    bool e3 = (b == lbnl::Unexpected<std::string>("oops"));    // true
+    bool e4 = (a != b);                                  // true  (synthesized)
 }
 ```
 

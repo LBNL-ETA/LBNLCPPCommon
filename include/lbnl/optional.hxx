@@ -1,5 +1,6 @@
 // optional.hxx
 #pragma once
+#include <compare>
 #include <optional>
 #include <variant>
 #include <type_traits>
@@ -174,6 +175,59 @@ namespace lbnl
             return m_opt;
         }
 
+        //
+        // Comparisons, mirroring std::optional. Hidden friends found by ADL.
+        // C++20 synthesizes operator!=, the reversed forms (nullopt == opt,
+        // value == opt), and the relational operators (<, <=, >, >=) from these.
+        // An empty optional compares less than any engaged one.
+        //
+        [[nodiscard]] friend constexpr bool operator==(const OptionalExt & lhs, const OptionalExt & rhs)
+            requires std::equality_comparable<T>
+        {
+            if(lhs.has_value() != rhs.has_value())
+            {
+                return false;
+            }
+            return !lhs.has_value() || (*lhs == *rhs);
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(const OptionalExt & lhs, std::nullopt_t) noexcept
+        {
+            return !lhs.has_value();
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(const OptionalExt & lhs, const T & val)
+            requires std::equality_comparable<T>
+        {
+            return lhs.has_value() && (*lhs == val);
+        }
+
+        [[nodiscard]] friend constexpr auto operator<=>(const OptionalExt & lhs, const OptionalExt & rhs)
+            requires std::three_way_comparable<T>
+        {
+            if(lhs.has_value() && rhs.has_value())
+            {
+                return *lhs <=> *rhs;
+            }
+            return static_cast<std::compare_three_way_result_t<T>>(lhs.has_value() <=> rhs.has_value());
+        }
+
+        [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const OptionalExt & lhs,
+                                                                        std::nullopt_t) noexcept
+        {
+            return lhs.has_value() <=> false;
+        }
+
+        [[nodiscard]] friend constexpr auto operator<=>(const OptionalExt & lhs, const T & val)
+            requires std::three_way_comparable<T>
+        {
+            if(lhs.has_value())
+            {
+                return *lhs <=> val;
+            }
+            return static_cast<std::compare_three_way_result_t<T>>(std::strong_ordering::less);
+        }
+
     private:
         std::optional<T> m_opt;
     };
@@ -237,7 +291,7 @@ namespace lbnl
 
     }   // namespace detail
 
-    // Adapter and pipe operators
+    // Adapter: lift a std::optional<T> into the monadic OptionalExt<T>.
     template<typename T>
     [[nodiscard]] constexpr auto extend(const std::optional<T> & opt)
     {
